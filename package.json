@@ -13,7 +13,9 @@
     "@tauri-apps/api": "^1.4.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-minimal-side-navigation": "^1.9.2"
+    "react-minimal-side-navigation": "^1.9.2",
+    "react-svg-gauge": "^1.0.10",
+    "victory": "^36.6.11"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^1.4.0",

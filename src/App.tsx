@@ -3,6 +3,8 @@ import reactLogo from "./assets/react.svg";
 import { invoke } from "@tauri-apps/api/tauri";
 import { NavSidebar } from "./components/NavSideBar";
 import "./App.css";
+import { PieChart } from "./components/PieChart";
+import Gauge from "react-svg-gauge"
 
 type SystemInfo = {
   cpu_name: string;
@@ -13,10 +15,19 @@ type SystemInfo = {
   gpu_load: number;
 };
 
+function getHexColor(value: number) {
+  let string = value.toString(16);
+  return (string.length === 1) ? '0' + string : string;
+}
+
 function App() {
   const [greetMsg, setGreetMsg] = useState("");
   const [name, setName] = useState("");
   const [systemInfo, setSystemInfo] = useState({} as SystemInfo);
+  let r = Math.floor(60 * 2.55);
+  let g = Math.floor(255 - (60 * 2.55));
+  let b = 0;
+  let colorHex = '#' + getHexColor(r) + getHexColor(g) + getHexColor(b);
 
   useEffect(() => {
     fetchSystemInfo();
@@ -79,6 +90,14 @@ function App() {
           <p>gpu name: {systemInfo?.gpu_name}</p>
           <p>gpu load: {systemInfo?.gpu_load}</p>
           <p>gpu temp: {systemInfo?.gpu_temp}</p>
+        </div>
+
+        <div>
+          <h1>GPU</h1>
+          <PieChart 
+            data={1}
+          />
+          <Gauge value={60} width={400} height={320} color={colorHex} label="This is a big one" valueFormatter={value => `${value}%`} />
         </div>
       </div>
     </>
