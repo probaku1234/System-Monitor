@@ -1,0 +1,8 @@
+.pie-chart {
+  width: 50%;
+  display: inline-block;
+}
+
+.pie-chart-load-title {
+  float: left;
+}

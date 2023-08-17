@@ -1,5 +1,6 @@
 import { VictoryPie, VictoryAnimation, VictoryLabel } from "victory";
 import React from "react";
+import "./PieChart.css"
 
 type PiChartProps = {
   data: number;
@@ -7,7 +8,8 @@ type PiChartProps = {
 
 export const PieChart: React.FC<PiChartProps> = ({ data }) => {
   return (
-    <div>
+    <div className="pie-chart">
+      <text className="pie-chart-load-title">Load</text>
       <svg viewBox="0 0 400 400" width="100%" height="100%">
         <VictoryPie
           standalone={false}
@@ -54,5 +56,3 @@ export const PieChart: React.FC<PiChartProps> = ({ data }) => {
     </div>
   );
 };
-
-export default PieChart;
