@@ -1,5 +1,7 @@
 import Gauge from "react-svg-gauge";
 import { PieChart } from "./PieChart";
+import { useAppSelector } from "../redux/hooks";
+import { selectSystemInfo } from "../redux/slice/systemInfoSlice";
 
 function getHexColor(value: number) {
   let string = value.toString(16);
@@ -7,17 +9,18 @@ function getHexColor(value: number) {
 }
 
 export const SystemInfoChart = () => {
-  let r = Math.floor(60 * 2.55);
-  let g = Math.floor(255 - 60 * 2.55);
+  const { gpu_load, gpu_temp } = useAppSelector(selectSystemInfo);
+  let r = Math.floor(gpu_temp * 2.55);
+  let g = Math.floor(255 - gpu_temp * 2.55);
   let b = 0;
   let colorHex = "#" + getHexColor(r) + getHexColor(g) + getHexColor(b);
 
   return (
     <div>
       <h1>GPU</h1>
-      <PieChart data={1} />
+      <PieChart data={gpu_load} />
       <Gauge
-        value={60}
+        value={gpu_temp}
         width={400}
         height={320}
         color={colorHex}
