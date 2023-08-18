@@ -1,4 +1,4 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "../store";
 
 export interface CurrentPageState {
@@ -13,7 +13,7 @@ export const currentPageSlice = createSlice({
   name: "currentPage",
   initialState,
   reducers: {
-    setCurrentPage: (state, action) => {
+    setCurrentPage: (state, action: PayloadAction< "home" | "system_spec" | "monitoring">) => {
       state.value = action.payload;
     },
   },
