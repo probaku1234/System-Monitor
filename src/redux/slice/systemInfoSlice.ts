@@ -3,23 +3,23 @@ import { RootState } from "../store";
 import { fetchSystemInfo } from "./systemInfoAPI";
 
 export interface SystemInfoState {
-  cpu_name: string;
-  used_memory: number;
-  total_memory: number;
-  gpu_name: string;
-  gpu_temp: number;
-  gpu_load: number;
+  cpuName: string;
+  usedMemory: number;
+  totalMemory: number;
+  gpuName: string;
+  gpuTemp: number;
+  gpuLoad: number;
   fetching: boolean;
   error?: string;
 }
 
 const initialState: SystemInfoState = {
-  cpu_name: "",
-  used_memory: 0,
-  total_memory: 0,
-  gpu_name: "",
-  gpu_temp: 0,
-  gpu_load: 0,
+  cpuName: "",
+  usedMemory: 0,
+  totalMemory: 0,
+  gpuName: "",
+  gpuTemp: 0,
+  gpuLoad: 0,
   fetching: true,
   error: "",
 };
@@ -39,12 +39,12 @@ export const systemInfoSlice = createSlice({
       state.fetching = true;
     });
     builder.addCase(setInfoAsync.fulfilled, (state, action) => {
-      state.cpu_name = action.payload.cpu_name;
-      state.used_memory = action.payload.used_memory;
-      state.total_memory = action.payload.total_memory;
-      state.gpu_name = action.payload.gpu_name;
-      state.gpu_temp = action.payload.gpu_temp;
-      state.gpu_load = action.payload.gpu_load;
+      state.cpuName = action.payload.cpuName;
+      state.usedMemory = action.payload.usedMemory;
+      state.totalMemory = action.payload.totalMemory;
+      state.gpuName = action.payload.gpuName;
+      state.gpuTemp = action.payload.gpuTemp;
+      state.gpuLoad = action.payload.gpuLoad;
       state.fetching = false;
     });
     builder.addCase(setInfoAsync.rejected, (state, error) => {

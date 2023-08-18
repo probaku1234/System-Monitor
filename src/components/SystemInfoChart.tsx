@@ -9,7 +9,8 @@ function getHexColor(value: number) {
 }
 
 export const SystemInfoChart = () => {
-  const { gpu_load, gpu_temp } = useAppSelector(selectSystemInfo);
+  const { gpuLoad: gpu_load, gpuTemp: gpu_temp } =
+    useAppSelector(selectSystemInfo);
   let r = Math.floor(gpu_temp * 2.55);
   let g = Math.floor(255 - gpu_temp * 2.55);
   let b = 0;

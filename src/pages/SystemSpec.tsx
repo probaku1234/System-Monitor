@@ -9,12 +9,12 @@ function SystemSpec() {
       <h1>System Spec</h1>
 
       <div>
-        <p>cpu name: {systemInfo?.cpu_name}</p>
-        <p>used memory: {systemInfo?.used_memory}</p>
-        <p>total memory: {systemInfo?.total_memory}</p>
-        <p>gpu name: {systemInfo?.gpu_name}</p>
-        <p>gpu load: {systemInfo?.gpu_load}</p>
-        <p>gpu temp: {systemInfo?.gpu_temp}</p>
+        <p>cpu name: {systemInfo?.cpuName}</p>
+        <p>used memory: {systemInfo?.usedMemory}</p>
+        <p>total memory: {systemInfo?.totalMemory}</p>
+        <p>gpu name: {systemInfo?.gpuName}</p>
+        <p>gpu load: {systemInfo?.gpuLoad}</p>
+        <p>gpu temp: {systemInfo?.gpuTemp}</p>
       </div>
     </>
   );

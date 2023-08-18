@@ -7,12 +7,12 @@ import { AnyAction } from "@reduxjs/toolkit";
 
 describe("system info reducer", () => {
   const initialState: SystemInfoState = {
-    cpu_name: "",
-    used_memory: 0,
-    total_memory: 0,
-    gpu_name: "",
-    gpu_temp: 0,
-    gpu_load: 0,
+    cpuName: "",
+    usedMemory: 0,
+    totalMemory: 0,
+    gpuName: "",
+    gpuTemp: 0,
+    gpuLoad: 0,
     fetching: true,
     error: "",
   };
