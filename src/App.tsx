@@ -63,7 +63,6 @@ function App() {
     <>
       <NavSidebar />
       <div className="container">
-        <p>{currentPage}</p>
         {/* <h1>Welcome to Tauri!</h1>
 
         <div className="row">
@@ -106,7 +105,6 @@ function App() {
           <p>gpu temp: {systemInfo?.gpu_temp}</p>
         </div> */}
         {showCurrentPage()}
-        <SystemInfoChart />
       </div>
     </>
   );
