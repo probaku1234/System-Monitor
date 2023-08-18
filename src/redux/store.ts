@@ -1,9 +1,11 @@
 import { configureStore, ThunkAction, Action } from "@reduxjs/toolkit";
 import currentPageReducer from "./slice/currentPageSlice";
+import systemInfoReducer from "./slice/systemInfoSlice";
 
 export const store = configureStore({
   reducer: {
     currentPage: currentPageReducer,
+    systemInfo: systemInfoReducer,
   },
 });
 

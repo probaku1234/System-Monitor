@@ -50,11 +50,10 @@ export const systemInfoSlice = createSlice({
     builder.addCase(setInfoAsync.rejected, (state, error) => {
       state.fetching = false;
       state.error = error.error.message;
-      console.log(error.error);
     });
   },
 });
 
-export const selectSystemInfo = (state: RootState) => state.currentPage;
+export const selectSystemInfo = (state: RootState) => state.systemInfo;
 
 export default systemInfoSlice.reducer;
