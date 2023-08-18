@@ -32,7 +32,9 @@ export const NavSidebar = () => {
             },
           ]}
           onSelect={(itemId) => {
-            dispatch(setCurrentPage(itemId));
+            dispatch(
+              setCurrentPage(itemId.itemId as "home" | "system_spec" | "monitoring")
+            );
           }}
         />
       </div>
