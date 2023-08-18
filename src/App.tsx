@@ -4,6 +4,11 @@ import { invoke } from "@tauri-apps/api/tauri";
 import { NavSidebar } from "./components/NavSideBar";
 import "./App.css";
 import { SystemInfoChart } from "./components/SystemInfoChart";
+import { useAppSelector } from "./redux/hooks";
+import { selectCurrentPage } from "./redux/slice/currentPageSlice";
+import Main from "./pages/Main";
+import SystemSpec from "./pages/SystemSpec";
+import Monitoring from "./pages/Monitoring";
 
 type SystemInfo = {
   cpu_name: string;
@@ -18,10 +23,25 @@ function App() {
   const [greetMsg, setGreetMsg] = useState("");
   const [name, setName] = useState("");
   const [systemInfo, setSystemInfo] = useState({} as SystemInfo);
+  const currentPage =
+    useAppSelector(selectCurrentPage)
 
   useEffect(() => {
     fetchSystemInfo();
   }, []);
+
+  function showCurrentPage() {
+    switch (currentPage) {
+      case "home":
+        return <Main />;
+      case "monitoring":
+        return <Monitoring />;
+      case "system_spec":
+        return <SystemSpec />;
+      default:
+        return <Main />;
+    }
+  }
 
   async function greet() {
     // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
@@ -40,7 +60,8 @@ function App() {
     <>
       <NavSidebar />
       <div className="container">
-        <h1>Welcome to Tauri!</h1>
+        <p>{currentPage}</p>
+        {/* <h1>Welcome to Tauri!</h1>
 
         <div className="row">
           <a href="https://vitejs.dev" target="_blank">
@@ -80,8 +101,8 @@ function App() {
           <p>gpu name: {systemInfo?.gpu_name}</p>
           <p>gpu load: {systemInfo?.gpu_load}</p>
           <p>gpu temp: {systemInfo?.gpu_temp}</p>
-        </div>
-
+        </div> */}
+        {showCurrentPage()}
         <SystemInfoChart />
       </div>
     </>
