@@ -9,6 +9,8 @@ import { selectCurrentPage } from "./redux/slice/currentPageSlice";
 import Main from "./pages/Main";
 import SystemSpec from "./pages/SystemSpec";
 import Monitoring from "./pages/Monitoring";
+import { setInfoAsync } from "./redux/slice/systemInfoSlice";
+import { useAppDispatch } from "./redux/hooks";
 
 type SystemInfo = {
   cpu_name: string;
@@ -23,11 +25,12 @@ function App() {
   const [greetMsg, setGreetMsg] = useState("");
   const [name, setName] = useState("");
   const [systemInfo, setSystemInfo] = useState({} as SystemInfo);
-  const currentPage =
-    useAppSelector(selectCurrentPage)
+  const currentPage = useAppSelector(selectCurrentPage);
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
-    fetchSystemInfo();
+    // fetchSystemInfo();
+    dispatch(setInfoAsync());
   }, []);
 
   function showCurrentPage() {
