@@ -5,6 +5,7 @@ use std::{
 
 use crate::sys_info;
 use systemstat::{saturating_sub_bytes, Platform, System};
+use log::debug;
 // use mockall::*;
 // use mockall::predicate::*;
 
@@ -22,7 +23,7 @@ pub struct SystemInfo {
     pub gpu_name: String,
     pub gpu_load: i8,
 }
-
+// TODO: error handling, unit testing, cache?, debugging log
 impl SystemInfo {
     pub fn new_info() -> Self {
         let memory_info = Self::memory_info();
@@ -143,7 +144,7 @@ impl SystemInfoFetcher {
 
     fn cpu_name(&self) -> String {
         let output = self.run_command(sys_info::COMAND_CPU_INFO);
-        println!("{}", String::from_utf8_lossy(&output.stdout));
+        log::debug!("{}", String::from_utf8_lossy(&output.stdout));
 
         let result_text = String::from_utf8_lossy(&output.stdout);
         let result_string = result_text.to_string();
@@ -156,6 +157,7 @@ impl SystemInfoFetcher {
 
     fn gpu_info(&self) -> (i8, String, i8) {
         let output = self.run_command(sys_info::COMMAND_GPU_INFO);
+        log::debug!("{}", String::from_utf8_lossy(&output.stdout));
 
         let gpu_result_text = String::from_utf8_lossy(&output.stdout);
         let gpu_result_string = gpu_result_text.to_string();
@@ -176,7 +178,7 @@ impl SystemInfoFetcher {
             Ok(mem) => {
                 used_memory = saturating_sub_bytes(mem.total, mem.free).as_u64();
                 total_memory = mem.total.as_u64();
-                println!(
+                log::debug!(
                     "\nMemory: {} used / {} ({} bytes) total ({:?})",
                     saturating_sub_bytes(mem.total, mem.free),
                     mem.total,
@@ -195,11 +197,11 @@ impl SystemInfoFetcher {
             .args(["/c", "gwmi win32_baseboard | FL Product,Manufacturer"])
             .output()
             .expect("msg");
-        println!(
+        log::debug!(
             "{}",
             String::from_utf8_lossy(&mother_board_command_result.stdout)
         );
-        println!(
+        log::debug!(
             "{}",
             String::from_utf8_lossy(&mother_board_command_result.stderr)
         );
