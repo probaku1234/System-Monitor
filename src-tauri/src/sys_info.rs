@@ -4,8 +4,8 @@ use std::{
 };
 
 use crate::sys_info;
-use systemstat::{saturating_sub_bytes, Platform, System};
 use log::debug;
+use systemstat::{saturating_sub_bytes, Platform, System};
 // use mockall::*;
 // use mockall::predicate::*;
 
@@ -123,15 +123,15 @@ impl SystemInfoFetcher {
         let memory_info = self.memory_info();
         let used_memory = memory_info.0;
         let total_memory = memory_info.1;
-    
+
         let gpu_info = self.gpu_info();
-    
+
         let gpu_temp: i8 = gpu_info.0;
         let gpu_name: String = gpu_info.1;
         let gpu_load: i8 = gpu_info.2;
-    
+
         let cpu_name = self.cpu_name();
-    
+
         sys_info::SystemInfo {
             used_memory,
             total_memory,
@@ -144,6 +144,12 @@ impl SystemInfoFetcher {
 
     fn cpu_name(&self) -> String {
         let output = self.run_command(sys_info::COMAND_CPU_INFO);
+
+        if !output.status.success() {
+            log::error!("CPU Name error {}", String::from_utf8_lossy(&output.stderr));
+            return "".to_string();
+        }
+
         log::debug!("{}", String::from_utf8_lossy(&output.stdout));
 
         let result_text = String::from_utf8_lossy(&output.stdout);
@@ -157,6 +163,12 @@ impl SystemInfoFetcher {
 
     fn gpu_info(&self) -> (i8, String, i8) {
         let output = self.run_command(sys_info::COMMAND_GPU_INFO);
+
+        if !output.status.success() {
+            log::error!("GPU Info error {}", String::from_utf8_lossy(&output.stderr));
+            return (0, "".to_string(), 0);
+        }
+
         log::debug!("{}", String::from_utf8_lossy(&output.stdout));
 
         let gpu_result_text = String::from_utf8_lossy(&output.stdout);
@@ -186,7 +198,7 @@ impl SystemInfoFetcher {
                     mem.platform_memory
                 )
             }
-            Err(x) => println!("\nMemory: error: {}", x),
+            Err(x) => log::error!("\nMemory: error: {}", x),
         }
 
         return (used_memory, total_memory);
@@ -257,6 +269,13 @@ mod tests {
         assert!(gpu_command_result.status.success());
     }
 
+    #[test]
+    fn test_run_command_with_invalid_command() {
+        let system_info_fetcher = SystemInfoFetcher { sys: System::new() };
+        let result = system_info_fetcher.run_command("invalid command");
+
+        assert_eq!(false, result.status.success());
+    }
     // #[test]
     // fn get_gpu_info() {
     //     let string = "foo";
