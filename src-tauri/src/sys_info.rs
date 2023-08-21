@@ -118,7 +118,30 @@ impl SystemInfoFetcher {
             .expect("fail to execute command");
     }
 
-    pub fn cpu_name(&self) -> String {
+    pub fn create_sys_info(&self) -> SystemInfo {
+        let memory_info = self.memory_info();
+        let used_memory = memory_info.0;
+        let total_memory = memory_info.1;
+    
+        let gpu_info = self.gpu_info();
+    
+        let gpu_temp: i8 = gpu_info.0;
+        let gpu_name: String = gpu_info.1;
+        let gpu_load: i8 = gpu_info.2;
+    
+        let cpu_name = self.cpu_name();
+    
+        sys_info::SystemInfo {
+            used_memory,
+            total_memory,
+            cpu_name: cpu_name.to_string(),
+            gpu_temp,
+            gpu_name,
+            gpu_load,
+        }
+    }
+
+    fn cpu_name(&self) -> String {
         let output = self.run_command(sys_info::COMAND_CPU_INFO);
         println!("{}", String::from_utf8_lossy(&output.stdout));
 
@@ -131,7 +154,7 @@ impl SystemInfoFetcher {
         return cpu_name.to_string();
     }
 
-    pub fn gpu_info(&self) -> (i8, String, i8) {
+    fn gpu_info(&self) -> (i8, String, i8) {
         let output = self.run_command(sys_info::COMMAND_GPU_INFO);
 
         let gpu_result_text = String::from_utf8_lossy(&output.stdout);
@@ -144,7 +167,7 @@ impl SystemInfoFetcher {
         return (gpu_temp, gpu_name, gpu_load);
     }
 
-    pub fn memory_info(&self) -> (u64, u64) {
+    fn memory_info(&self) -> (u64, u64) {
         let sys = System::new();
         let mut used_memory: u64 = 0;
         let mut total_memory: u64 = 0;

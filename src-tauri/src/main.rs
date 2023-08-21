@@ -15,26 +15,7 @@ fn greet(name: &str) -> String {
 fn get_sys_info() -> sys_info::SystemInfo {
     let system_info_fetcher = SystemInfoFetcher::new();
 
-    let memory_info = system_info_fetcher.memory_info();
-    let used_memory = memory_info.0;
-    let total_memory = memory_info.1;
-
-    let gpu_info = system_info_fetcher.gpu_info();
-
-    let gpu_temp: i8 = gpu_info.0;
-    let gpu_name: String = gpu_info.1;
-    let gpu_load: i8 = gpu_info.2;
-
-    let cpu_name = system_info_fetcher.cpu_name();
-
-    sys_info::SystemInfo {
-        used_memory,
-        total_memory,
-        cpu_name: cpu_name.to_string(),
-        gpu_temp,
-        gpu_name,
-        gpu_load,
-    }
+    system_info_fetcher.create_sys_info()
 }
 
 fn main() {
