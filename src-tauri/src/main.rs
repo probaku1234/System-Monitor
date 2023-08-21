@@ -14,12 +14,10 @@ fn greet(name: &str) -> String {
 #[tauri::command]
 fn get_sys_info() -> sys_info::SystemInfo {
     let system_info_fetcher = SystemInfoFetcher::new();
-    let mut used_memory: u64 = 0;
-    let mut total_memory: u64 = 0;
 
     let memory_info = system_info_fetcher.memory_info();
-    used_memory = memory_info.0;
-    total_memory = memory_info.1;
+    let used_memory = memory_info.0;
+    let total_memory = memory_info.1;
 
     let gpu_info = system_info_fetcher.gpu_info();
 
