@@ -1,9 +1,6 @@
-import { useState, useEffect } from "react";
-import reactLogo from "./assets/react.svg";
-import { invoke } from "@tauri-apps/api/tauri";
+import { useEffect } from "react";
 import { NavSidebar } from "./components/NavSideBar";
 import "./App.css";
-import { SystemInfoChart } from "./components/SystemInfoChart";
 import { useAppSelector } from "./redux/hooks";
 import { selectCurrentPage } from "./redux/slice/currentPageSlice";
 import Main from "./pages/Main";
@@ -12,19 +9,7 @@ import Monitoring from "./pages/Monitoring";
 import { setInfoAsync } from "./redux/slice/systemInfoSlice";
 import { useAppDispatch } from "./redux/hooks";
 
-type SystemInfo = {
-  cpu_name: string;
-  used_memory: number;
-  total_memory: number;
-  gpu_name: string;
-  gpu_temp: number;
-  gpu_load: number;
-};
-
 function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
-  const [systemInfo, setSystemInfo] = useState({} as SystemInfo);
   const currentPage = useAppSelector(selectCurrentPage);
   const dispatch = useAppDispatch();
 
@@ -44,19 +29,6 @@ function App() {
       default:
         return <Main />;
     }
-  }
-
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
-    setGreetMsg(await invoke("greet", { name }));
-    await invoke("get_sys_info").then((data) => console.log(data));
-  }
-
-  async function fetchSystemInfo() {
-    await invoke("get_sys_info").then((data) => {
-      console.log(data);
-      setSystemInfo(data as any);
-    });
   }
 
   return (
