@@ -8,14 +8,15 @@ import SystemSpec from "./pages/SystemSpec";
 import Monitoring from "./pages/Monitoring";
 import { setInfoAsync } from "./redux/slice/systemInfoSlice";
 import { useAppDispatch } from "./redux/hooks";
+import { useInterval } from "usehooks-ts";
 
 function App() {
   const currentPage = useAppSelector(selectCurrentPage);
   const dispatch = useAppDispatch();
 
-  useEffect(() => {
+  useInterval(() => {
     dispatch(setInfoAsync());
-  }, []);
+  }, 5000);
 
   function showCurrentPage() {
     switch (currentPage) {
@@ -33,9 +34,7 @@ function App() {
   return (
     <>
       <NavSidebar />
-      <div className="container">
-        {showCurrentPage()}
-      </div>
+      <div className="container">{showCurrentPage()}</div>
     </>
   );
 }
