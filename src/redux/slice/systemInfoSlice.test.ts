@@ -19,12 +19,12 @@ describe("system info reducer", () => {
 
   it("should handle initial state", async () => {
     expect(systemInfoReducer(undefined, { type: "unknown" })).toEqual({
-      cpu_name: "",
-      used_memory: 0,
-      total_memory: 0,
-      gpu_name: "",
-      gpu_temp: 0,
-      gpu_load: 0,
+      cpuName: "",
+      usedMemory: 0,
+      totalMemory: 0,
+      gpuName: "",
+      gpuTemp: 0,
+      gpuLoad: 0,
       fetching: true,
       error: "",
     });
@@ -34,12 +34,12 @@ describe("system info reducer", () => {
     const action: AnyAction = { type: setInfoAsync.pending.type };
     const actual = systemInfoReducer(initialState, action);
     expect(actual).toEqual({
-      cpu_name: "",
-      used_memory: 0,
-      total_memory: 0,
-      gpu_name: "",
-      gpu_temp: 0,
-      gpu_load: 0,
+      cpuName: "",
+      usedMemory: 0,
+      totalMemory: 0,
+      gpuName: "",
+      gpuTemp: 0,
+      gpuLoad: 0,
       fetching: true,
       error: "",
     });
@@ -47,12 +47,12 @@ describe("system info reducer", () => {
 
   it("should update system info when setInfoAsync is fulfilled", () => {
     const mockPayload = {
-      cpu_name: "cpu name",
-      used_memory: 30,
-      total_memory: 60,
-      gpu_name: "gpu name",
-      gpu_temp: 30,
-      gpu_load: 30,
+      cpuName: "cpu name",
+      usedMemory: 30,
+      totalMemory: 60,
+      gpuName: "gpu name",
+      gpuTemp: 30,
+      gpuLoad: 30,
     };
     const action: AnyAction = {
       type: setInfoAsync.fulfilled.type,
