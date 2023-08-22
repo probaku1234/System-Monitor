@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { NavSidebar } from "./components/NavSideBar";
 import "./App.css";
 import { useAppSelector } from "./redux/hooks";
