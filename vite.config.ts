@@ -19,6 +19,8 @@ export default defineConfig(async () => ({
   envPrefix: ["VITE_", "TAURI_"],
   test: {
     global: true,
-    mockReset: true
+    mockReset: true,
+    environment: 'jsdom',
+    setupFiles: './src/setuptests.ts',
   }
 }));
