@@ -31,6 +31,12 @@ describe("System Spec", () => {
     expect(screen.getByText(/System Spec/i)).toBeDefined();
   });
 
+  it("should renders spinner if fetching", () => {
+    renderWithProviders(<SystemSpec />);
+
+    expect(screen.getByTestId(/loader/i)).toBeDefined();
+  })
+
   it("renders system info", async () => {
     const store = setupStore();
     await waitFor(() => {
