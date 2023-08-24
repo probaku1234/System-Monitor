@@ -9,7 +9,7 @@ type PiChartProps = {
 export const PieChart: React.FC<PiChartProps> = ({ data }) => {
   return (
     <div className="pie-chart">
-      <text className="pie-chart-load-title">Load</text>
+      <p className="pie-chart-load-title">Load</p>
       <svg viewBox="0 0 400 400" width="100%" height="100%">
         <VictoryPie
           standalone={false}
