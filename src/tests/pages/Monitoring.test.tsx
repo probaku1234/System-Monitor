@@ -47,5 +47,6 @@ describe("Monitoring", () => {
     renderWithProviders(<Monitoring />, { store });
 
     expect(screen.getByText(/60/i)).toBeDefined();
+    expect(screen.getByText(/20%/i)).toBeDefined();
   });
 });
