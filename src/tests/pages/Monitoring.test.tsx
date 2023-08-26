@@ -12,6 +12,8 @@ beforeAll(() => {
     if (cmd === "get_sys_info") {
       return {
         cpuName: "test cpu",
+        cpuTemp: 50,
+        cpuLoad: 30,
         usedMemory: 1,
         totalMemory: 5,
         gpuName: "test gpu",

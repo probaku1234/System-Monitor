@@ -8,6 +8,8 @@ function Monitoring() {
   const {
     gpuLoad: gpu_load,
     gpuTemp: gpu_temp,
+    cpuTemp,
+    cpuLoad,
     usedMemory,
     totalMemory,
     fetching,
@@ -26,9 +28,11 @@ function Monitoring() {
       ) : (
         <>
           <SystemInfoChart type="GPU" load={gpu_load} temp={gpu_temp} />
-          <SystemInfoChart type="CPU" load={0} temp={0} />
+          <SystemInfoChart type="CPU" load={cpuLoad} temp={cpuTemp} />
           <h1>RAM</h1>
           <GaugeChart temp={getUsedMemoryPercentage()} label="Load" unit="%" />
+          <p>Total memory: {totalMemory}</p>
+          <p>Used Memory: {usedMemory}</p>
         </>
       )}
     </>
