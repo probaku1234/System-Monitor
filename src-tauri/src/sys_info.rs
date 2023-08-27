@@ -5,6 +5,7 @@ use std::{
 
 use crate::sys_info;
 use log::debug;
+use lru::LruCache;
 use std::thread;
 use std::time::Duration;
 use systemstat::{saturating_sub_bytes, Platform, System};
@@ -44,14 +45,14 @@ impl Default for SystemInfo {
     }
 }
 
-pub struct SystemInfoFetcher {
-    sys: System,
+pub struct SystemInfoFetcher<'a> {
+    sys: &'a System,
 }
 
 // #[automock]
-impl SystemInfoFetcher {
-    pub fn new() -> Self {
-        Self { sys: System::new() }
+impl<'a> SystemInfoFetcher<'a> {
+    pub fn new(sys: &'a System) -> Self {
+        Self { sys }
     }
 
     fn run_command(&self, command: &str) -> Output {

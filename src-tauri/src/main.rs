@@ -5,7 +5,11 @@ use crate::sys_info::SystemInfoFetcher;
 use log::info;
 use simple_logger::SimpleLogger;
 mod sys_info;
-use tauri::Manager;
+// use lru::LruCache;
+// use std::num::NonZeroUsize;
+use tauri::{Manager, api::path::cache_dir, State};
+use std::{collections::HashMap, sync::Mutex};
+use systemstat::{saturating_sub_bytes, Platform, System};
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
@@ -14,31 +18,33 @@ fn greet(name: &str) -> String {
 }
 
 #[tauri::command]
-fn get_sys_info() -> sys_info::SystemInfo {
-    let system_info_fetcher = SystemInfoFetcher::new();
+fn get_sys_info(sys: State<System>) -> sys_info::SystemInfo {
+    let system_info_fetcher = SystemInfoFetcher::new(sys.inner());
 
     system_info_fetcher.create_sys_info()
 }
 
 fn main() {
+    // let cache: LruCache<&str, &str> = LruCache::new(NonZeroUsize::new(10).unwrap());
     SimpleLogger::new().init().unwrap();
     log::info!("tauri app started");
     tauri::Builder::default()
         .plugin(tauri_plugin_store::Builder::default().build())
         // .setup(|app| {
-        //     let id = app.listen_global("tauri://close-requested", |_event| {
-        //         log::info!("tauri app ended");
-        //     });
-        //     app.listen_global("tauri://move", |_event| {
-        //         log::info!("tauri app ended");
-        //     });
-        //     app.listen_global("tauri://resize", |_event| {
-        //         log::info!("tauri app ended");
-        //     });
-        //     app.unlisten(id);
-
+        //     let mut cache = LruCache::new(NonZeroUsize::new(2).unwrap());
+        //     cache.put("apple", "apple");
+        //     cache.put("banana", "banana");
+        //     LruCache::
         //     Ok(())
         // })
+        .on_window_event(|event| match event.event() {
+            tauri::WindowEvent::CloseRequested { api, .. } => {
+                log::info!("tauri app ended");
+                
+            }
+            _ => {}
+        })
+        .manage(System::new())
         .invoke_handler(tauri::generate_handler![greet, get_sys_info])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
