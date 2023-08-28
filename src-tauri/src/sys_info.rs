@@ -1,20 +1,17 @@
-use std::{
-    io,
-    process::{Command, Output},
-};
-
 use crate::sys_info;
-use log::debug;
-use lru::LruCache;
+use std::process::{Command, Output};
 use std::thread;
 use std::time::Duration;
 use systemstat::{saturating_sub_bytes, Platform, System};
+use regex::Regex;
+use tauri::regex;
 // use mockall::*;
 // use mockall::predicate::*;
 
 const COMMAND_GPU_INFO: &str =
     "nvidia-smi --query-gpu=temperature.gpu,gpu_name,utilization.gpu --format=csv,noheader,nounits";
 const COMAND_CPU_INFO: &str = "wmic cpu get name";
+const COMMAND_MOTHERBOARD_INFO: &str = "Get-CimInstance Win32_BaseBoard -Property Manufacturer,Product";
 
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -29,7 +26,7 @@ pub struct SystemInfo {
     pub gpu_load: i8,
 }
 
-// TODO: unit testing, cache?
+// TODO: unit testing
 impl Default for SystemInfo {
     fn default() -> Self {
         Self {
@@ -58,6 +55,13 @@ impl<'a> SystemInfoFetcher<'a> {
     fn run_command(&self, command: &str) -> Output {
         return Command::new("cmd")
             .args(["/c", command])
+            .output()
+            .expect("fail to execute command");
+    }
+
+    fn run_command_with_powershell(&self, command: &str) -> Output {
+        return Command::new("powershell")
+            .args(["-Command", command])
             .output()
             .expect("fail to execute command");
     }
@@ -152,30 +156,25 @@ impl<'a> SystemInfoFetcher<'a> {
         return (used_memory, total_memory);
     }
 
-    fn motherboard_info() {
-        let mother_board_command_result = Command::new("cmd")
-            .args(["/c", "gwmi", "win32_baseboard"])
-            .output()
-            .expect("msg");
+    fn motherboard_info(&self) -> String {
+        let motherboard_command_result = self.run_command_with_powershell(COMMAND_MOTHERBOARD_INFO);
         log::debug!(
             "{}",
-            String::from_utf8_lossy(&mother_board_command_result.stdout)
-        );
-        println!(
-            "{}",
-            String::from_utf8_lossy(&mother_board_command_result.stdout)
+            String::from_utf8_lossy(&motherboard_command_result.stdout)
         );
         log::debug!(
             "{}",
-            String::from_utf8_lossy(&mother_board_command_result.stderr)
-        );
-        println!(
-            "{}",
-            String::from_utf8_lossy(&mother_board_command_result.stderr)
+            String::from_utf8_lossy(&motherboard_command_result.stderr)
         );
 
-        let b = std::str::from_utf8(&mother_board_command_result.stderr).is_ok();
-        println!("{:}", b);
+        let result_string = String::from_utf8_lossy(&motherboard_command_result.stdout);
+        let product_name = self.parse_value("Product", &result_string);
+        let manufacturer_name = self.parse_value("Manufacturer", &result_string);
+        
+        log::debug!("{}", product_name);
+        log::debug!("{}", manufacturer_name);
+
+        format!("{} {}", manufacturer_name, product_name)
     }
 
     fn cpu_info(&self) -> (i8, i8) {
@@ -204,28 +203,44 @@ impl<'a> SystemInfoFetcher<'a> {
             Ok(temp) => {
                 cpu_temp = temp as i8;
                 log::debug!("\nCPU temp: {}", temp)
-            },
+            }
             Err(x) => log::error!("\nCPU temp: {}", x),
         }
         (cpu_temp, cpu_load)
+    }
+
+    fn parse_value(&self, value_name: &str, target_string: &str) -> String {
+        let regex = Regex::new(&format!("{}.*", value_name)).unwrap();
+        let matched_string = regex.find(target_string).unwrap().as_str().to_string();
+        let splited_string_vector: Vec<&str> = matched_string.split(":").collect();
+
+        if splited_string_vector.len() != 2 {
+            log::error!("The target_string is not valid format: {}", target_string);
+            return format!("");
+        }
+        
+        return format!("{}", splited_string_vector[1].trim());
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::COMAND_CPU_INFO;
-    use crate::sys_info::{SystemInfo, SystemInfoFetcher, COMMAND_GPU_INFO};
-    use mockall::predicate::*;
-    use mockall::*;
-    use std::{
-        os::windows::process::ExitStatusExt,
-        process::{Command, ExitCode, ExitStatus, Output},
-    };
+    use std::process::Command;
+    use super::{COMAND_CPU_INFO, COMMAND_MOTHERBOARD_INFO};
+    use crate::sys_info::{SystemInfoFetcher, COMMAND_GPU_INFO};
+    // use mockall::predicate::*;
+    // use mockall::*;
+    // use std::{
+    //     os::windows::process::ExitStatusExt,
+    //     process::{Command, ExitCode, ExitStatus, Output},
+    // };
     use systemstat::{Platform, System};
 
     #[test]
     fn test_run_command() {
-        let system_info_fetcher = SystemInfoFetcher { sys: System::new() };
+        let system_info_fetcher = SystemInfoFetcher {
+            sys: &System::new(),
+        };
         let cpu_command_result = system_info_fetcher.run_command(COMAND_CPU_INFO);
         let gpu_command_result = system_info_fetcher.run_command(COMMAND_GPU_INFO);
 
@@ -238,16 +253,34 @@ mod tests {
 
     #[test]
     fn test_run_command_with_invalid_command() {
-        let system_info_fetcher = SystemInfoFetcher { sys: System::new() };
+        let system_info_fetcher = SystemInfoFetcher {
+            sys: &System::new(),
+        };
         let result = system_info_fetcher.run_command("invalid command");
 
         assert_eq!(false, result.status.success());
     }
 
     #[test]
+    fn test_run_command_with_powershell() {
+        let system_info_fetcher = SystemInfoFetcher {
+            sys: &System::new(),
+        };
+        let motherboard_command_result = system_info_fetcher.run_command_with_powershell(COMMAND_MOTHERBOARD_INFO);
+
+        println!("{}", String::from_utf8_lossy(&motherboard_command_result.stdout));
+        println!("{}", String::from_utf8_lossy(&motherboard_command_result.stderr));
+
+        assert!(motherboard_command_result.status.success());
+    }
+
+    #[test]
     fn test_motherboard() {
-        // let system_info_fetcher = SystemInfoFetcher { sys: System::new() };
-        SystemInfoFetcher::motherboard_info();
+        let system_info_fetcher = SystemInfoFetcher {
+            sys: &System::new(),
+        };
+        let motherboard_name = system_info_fetcher.motherboard_info();
+        println!("{}", motherboard_name);
     }
     // #[test]
     // fn get_gpu_info() {
