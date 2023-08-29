@@ -26,7 +26,7 @@ pub struct SystemInfo {
     pub gpu_name: String,
     pub gpu_load: i8,
     pub motherboard_name: String,
-    pub disk_info: Vec<DiskInfo>
+    pub disk_info: Vec<DiskInfo>,
 }
 
 // TODO: unit testing
@@ -42,7 +42,7 @@ impl Default for SystemInfo {
             gpu_name: "".to_string(),
             gpu_load: 0,
             motherboard_name: "".to_string(),
-            disk_info: vec![]
+            disk_info: vec![],
         }
     }
 }
@@ -109,7 +109,7 @@ impl<'a> SystemInfoFetcher<'a> {
             gpu_name,
             gpu_load,
             motherboard_name,
-            disk_info
+            disk_info,
         }
     }
 
@@ -270,18 +270,24 @@ impl<'a> SystemInfoFetcher<'a> {
             let disk_usage_string = disk_usage_matches[index];
             let splitted_string_vector: Vec<&str> = disk_usage_string.split(" ").collect();
             log::debug!(
-                "used: {} {}, total: {} {}, percentage: {}",
+                "used: {} {}, total: {} {}, file system: {}, percentage: {}",
                 splitted_string_vector[0],
                 splitted_string_vector[1],
                 splitted_string_vector[3],
                 splitted_string_vector[4],
-                splitted_string_vector[5]
+                splitted_string_vector[5],
+                splitted_string_vector[6]
             );
+
+            if splitted_string_vector[5].eq("FAT32") {
+                continue;
+            }
+
             let disk_info = DiskInfo {
                 disk_alpha: disk_alpha_byte as char,
                 used_space: format!("{}{}", splitted_string_vector[0], splitted_string_vector[1]),
                 total_space: format!("{}{}", splitted_string_vector[3], splitted_string_vector[4]),
-                percent: splitted_string_vector[5].trim().parse().unwrap(),
+                percent: splitted_string_vector[6].trim().parse().unwrap(),
             };
 
             disk_info_vector.push(disk_info);
@@ -294,7 +300,7 @@ impl<'a> SystemInfoFetcher<'a> {
 #[cfg(test)]
 mod tests {
     use super::{COMAND_CPU_INFO, COMMAND_MOTHERBOARD_INFO};
-    use crate::sys_info::{SystemInfoFetcher, COMMAND_GPU_INFO, DiskInfo};
+    use crate::sys_info::{DiskInfo, SystemInfoFetcher, COMMAND_GPU_INFO};
     use std::process::Command;
     // use mockall::predicate::*;
     // use mockall::*;
@@ -365,26 +371,63 @@ mod tests {
         };
 
         let disk_info_vec = system_info_fetcher.parse_disk_info(
-            "content                        371 GiB / 406 GiB 91
+            "content                        371 GiB / 406 GiB NTFS 91
             title                          Disk (C:)
-            content                        472 GiB / 931 GiB 50
+            content                        472 GiB / 931 GiB NTFS 50
             title                          Disk (D:)",
         );
 
-        assert_eq!(disk_info_vec, vec![
-            DiskInfo {
-                disk_alpha: 'C',
-                used_space: "371GiB".to_string(),
-                total_space: "406GiB".to_string(),
-                percent: 91
-            },
-            DiskInfo {
-                disk_alpha: 'D',
-                used_space: "472GiB".to_string(),
-                total_space: "931GiB".to_string(),
-                percent: 50
-            }
-        ]);
+        assert_eq!(
+            disk_info_vec,
+            vec![
+                DiskInfo {
+                    disk_alpha: 'C',
+                    used_space: "371GiB".to_string(),
+                    total_space: "406GiB".to_string(),
+                    percent: 91
+                },
+                DiskInfo {
+                    disk_alpha: 'D',
+                    used_space: "472GiB".to_string(),
+                    total_space: "931GiB".to_string(),
+                    percent: 50
+                }
+            ]
+        );
+    }
+
+    #[test]
+    fn test_parse_disk_info_should_not_include_fat32_file_system_disk() {
+        let system_info_fetcher = SystemInfoFetcher {
+            sys: &System::new(),
+        };
+
+        let disk_info_vec = system_info_fetcher.parse_disk_info(
+            "content                        371 GiB / 406 GiB NTFS 91
+            title                          Disk (C:)
+            content                        472 GiB / 931 GiB NTFS 50
+            title                          Disk (D:)
+            content                        13 GiB / 15 GiB FAT32 89
+            title                          Disk (G:)",
+        );
+
+        assert_eq!(
+            disk_info_vec,
+            vec![
+                DiskInfo {
+                    disk_alpha: 'C',
+                    used_space: "371GiB".to_string(),
+                    total_space: "406GiB".to_string(),
+                    percent: 91
+                },
+                DiskInfo {
+                    disk_alpha: 'D',
+                    used_space: "472GiB".to_string(),
+                    total_space: "931GiB".to_string(),
+                    percent: 50
+                }
+            ]
+        );
     }
 
     #[test]
@@ -397,14 +440,8 @@ mod tests {
         // .output()
         // .expect("fail to execute command");
         let result = system_info_fetcher.run_command_with_powershell("cd ./script ; ./sysinfo.ps1");
-        println!(
-            "{}",
-            String::from_utf8_lossy(&result.stdout)
-        );
-        println!(
-            "{}",
-            String::from_utf8_lossy(&result.stderr)
-        );
+        println!("{}", String::from_utf8_lossy(&result.stdout));
+        println!("{}", String::from_utf8_lossy(&result.stderr));
     }
     // #[test]
     // fn get_gpu_info() {
