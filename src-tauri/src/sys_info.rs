@@ -13,6 +13,7 @@ const COMMAND_GPU_INFO: &str =
 const COMAND_CPU_INFO: &str = "wmic cpu get name";
 const COMMAND_MOTHERBOARD_INFO: &str =
     "Get-CimInstance Win32_BaseBoard -Property Manufacturer,Product";
+const COMMAND_DISK_MODEL_INFO: &str = "wmic diskdrive get model";
 
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -50,6 +51,7 @@ impl Default for SystemInfo {
 #[derive(Eq, PartialEq, Debug, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DiskInfo {
+    model: String,
     disk_alpha: char,
     used_space: String,
     total_space: String,
@@ -232,7 +234,11 @@ impl<'a> SystemInfoFetcher<'a> {
         let disk_info_result = self.run_command_with_powershell("cd ./script ; ./sysinfo.ps1");
         let result_string = String::from_utf8_lossy(&disk_info_result.stdout);
 
-        return self.parse_disk_info(&result_string);
+        let disk_model_result = self.run_command_with_powershell(COMMAND_DISK_MODEL_INFO);
+        let disk_model_result_string = String::from_utf8_lossy(&disk_model_result.stdout);
+        let disk_model_vector = self.parse_disk_model(&disk_model_result_string);
+
+        return self.parse_disk_info(disk_model_vector, &result_string);
     }
 
     fn parse_value(&self, value_name: &str, target_string: &str) -> String {
@@ -248,7 +254,11 @@ impl<'a> SystemInfoFetcher<'a> {
         return format!("{}", splitted_string_vector[1].trim());
     }
 
-    fn parse_disk_info(&self, target_string: &str) -> Vec<DiskInfo> {
+    fn parse_disk_info(
+        &self,
+        disk_model_vector: Vec<&str>,
+        target_string: &str,
+    ) -> Vec<DiskInfo> {
         let mut disk_info_vector = Vec::new();
         let regex_disk_alpha = Regex::new(r"\([A-Z]:\)").unwrap();
         let disk_alpha_matches: Vec<_> = regex_disk_alpha
@@ -284,6 +294,7 @@ impl<'a> SystemInfoFetcher<'a> {
             }
 
             let disk_info = DiskInfo {
+                model: disk_model_vector[index].to_string(),
                 disk_alpha: disk_alpha_byte as char,
                 used_space: format!("{}{}", splitted_string_vector[0], splitted_string_vector[1]),
                 total_space: format!("{}{}", splitted_string_vector[3], splitted_string_vector[4]),
@@ -294,6 +305,19 @@ impl<'a> SystemInfoFetcher<'a> {
         }
 
         return disk_info_vector;
+    }
+
+    fn parse_disk_model(&self, disk_model_result_string_ref: &'a str) -> Vec<&str> {
+        let mut disk_model_vector = Vec::new();
+
+        let mut lines = disk_model_result_string_ref.lines();
+        lines.next();
+        while let Some(line) = lines.next() {
+            log::debug!("{}", line);
+           
+            disk_model_vector.push(line.trim());
+        }
+        disk_model_vector
     }
 }
 
@@ -370,7 +394,9 @@ mod tests {
             sys: &System::new(),
         };
 
+        let disk_model_vector = vec!["disk 1", "disk 2"];
         let disk_info_vec = system_info_fetcher.parse_disk_info(
+            disk_model_vector,
             "content                        371 GiB / 406 GiB NTFS 91
             title                          Disk (C:)
             content                        472 GiB / 931 GiB NTFS 50
@@ -381,12 +407,14 @@ mod tests {
             disk_info_vec,
             vec![
                 DiskInfo {
+                    model: "disk 1".to_string(),
                     disk_alpha: 'C',
                     used_space: "371GiB".to_string(),
                     total_space: "406GiB".to_string(),
                     percent: 91
                 },
                 DiskInfo {
+                    model: "disk 2".to_string(),
                     disk_alpha: 'D',
                     used_space: "472GiB".to_string(),
                     total_space: "931GiB".to_string(),
@@ -402,7 +430,9 @@ mod tests {
             sys: &System::new(),
         };
 
+        let disk_model_vector = vec!["disk 1", "disk 2", "disk 3"];
         let disk_info_vec = system_info_fetcher.parse_disk_info(
+            disk_model_vector,
             "content                        371 GiB / 406 GiB NTFS 91
             title                          Disk (C:)
             content                        472 GiB / 931 GiB NTFS 50
@@ -415,12 +445,14 @@ mod tests {
             disk_info_vec,
             vec![
                 DiskInfo {
+                    model: "disk 1".to_string(),
                     disk_alpha: 'C',
                     used_space: "371GiB".to_string(),
                     total_space: "406GiB".to_string(),
                     percent: 91
                 },
                 DiskInfo {
+                    model: "disk 2".to_string(),
                     disk_alpha: 'D',
                     used_space: "472GiB".to_string(),
                     total_space: "931GiB".to_string(),
@@ -428,6 +460,20 @@ mod tests {
                 }
             ]
         );
+    }
+
+    #[test]
+    fn test_parse_disk_model() {
+        let system_info_fetcher = SystemInfoFetcher {
+            sys: &System::new(),
+        };
+        let result = system_info_fetcher.parse_disk_model(
+            "Model
+            Disk 1
+            Disk 2
+            Disk 3"
+        );
+        assert_eq!(result, vec!["Disk 1", "Disk 2", "Disk 3"]);
     }
 
     #[test]
