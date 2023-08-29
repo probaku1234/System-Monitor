@@ -1,9 +1,9 @@
 use crate::sys_info;
+use regex::Regex;
 use std::process::{Command, Output};
 use std::thread;
 use std::time::Duration;
 use systemstat::{saturating_sub_bytes, Platform, System};
-use regex::Regex;
 use tauri::regex;
 // use mockall::*;
 // use mockall::predicate::*;
@@ -11,7 +11,8 @@ use tauri::regex;
 const COMMAND_GPU_INFO: &str =
     "nvidia-smi --query-gpu=temperature.gpu,gpu_name,utilization.gpu --format=csv,noheader,nounits";
 const COMAND_CPU_INFO: &str = "wmic cpu get name";
-const COMMAND_MOTHERBOARD_INFO: &str = "Get-CimInstance Win32_BaseBoard -Property Manufacturer,Product";
+const COMMAND_MOTHERBOARD_INFO: &str =
+    "Get-CimInstance Win32_BaseBoard -Property Manufacturer,Product";
 
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -24,6 +25,7 @@ pub struct SystemInfo {
     pub gpu_temp: i8,
     pub gpu_name: String,
     pub gpu_load: i8,
+    pub motherboard_name: String,
 }
 
 // TODO: unit testing
@@ -38,8 +40,17 @@ impl Default for SystemInfo {
             gpu_temp: 0,
             gpu_name: "".to_string(),
             gpu_load: 0,
+            motherboard_name: "".to_string(),
         }
     }
+}
+
+#[derive(Eq, PartialEq, Debug)]
+struct DiskInfo {
+    disk_alpha: char,
+    used_space: String,
+    total_space: String,
+    percent: i8,
 }
 
 pub struct SystemInfoFetcher<'a> {
@@ -82,6 +93,8 @@ impl<'a> SystemInfoFetcher<'a> {
         let cpu_temp = cpu_info.0;
         let cpu_load = cpu_info.1;
 
+        let motherboard_name = self.motherboard_info();
+
         sys_info::SystemInfo {
             used_memory,
             total_memory,
@@ -91,6 +104,7 @@ impl<'a> SystemInfoFetcher<'a> {
             gpu_temp,
             gpu_name,
             gpu_load,
+            motherboard_name,
         }
     }
 
@@ -170,7 +184,7 @@ impl<'a> SystemInfoFetcher<'a> {
         let result_string = String::from_utf8_lossy(&motherboard_command_result.stdout);
         let product_name = self.parse_value("Product", &result_string);
         let manufacturer_name = self.parse_value("Manufacturer", &result_string);
-        
+
         log::debug!("{}", product_name);
         log::debug!("{}", manufacturer_name);
 
@@ -212,22 +226,64 @@ impl<'a> SystemInfoFetcher<'a> {
     fn parse_value(&self, value_name: &str, target_string: &str) -> String {
         let regex = Regex::new(&format!("{}.*", value_name)).unwrap();
         let matched_string = regex.find(target_string).unwrap().as_str().to_string();
-        let splited_string_vector: Vec<&str> = matched_string.split(":").collect();
+        let splitted_string_vector: Vec<&str> = matched_string.split(":").collect();
 
-        if splited_string_vector.len() != 2 {
+        if splitted_string_vector.len() != 2 {
             log::error!("The target_string is not valid format: {}", target_string);
             return format!("");
         }
-        
-        return format!("{}", splited_string_vector[1].trim());
+
+        return format!("{}", splitted_string_vector[1].trim());
+    }
+
+    fn parse_disk_info(&self, target_string: &str) -> Vec<DiskInfo> {
+        let mut disk_info_vector = Vec::new();
+        let regex_disk_alpha = Regex::new(r"\([A-Z]:\)").unwrap();
+        let disk_alpha_matches: Vec<_> = regex_disk_alpha
+            .find_iter(target_string)
+            .map(|m| m.as_str())
+            .collect();
+
+        let regex_disk_usage = Regex::new(r"[0-9].*").unwrap();
+        let disk_usage_matches: Vec<_> = regex_disk_usage
+            .find_iter(target_string)
+            .map(|m| m.as_str())
+            .collect();
+
+        for (index, disk_alpha_match_string_ref) in disk_alpha_matches.iter().enumerate() {
+            let match_string = disk_alpha_match_string_ref.to_string();
+            let disk_alpha_byte = match_string.as_bytes()[1];
+            log::debug!("Disk {}", disk_alpha_byte as char);
+
+            let disk_usage_string = disk_usage_matches[index];
+            let splitted_string_vector: Vec<&str> = disk_usage_string.split(" ").collect();
+            log::debug!(
+                "used: {} {}, total: {} {}, percentage: {}",
+                splitted_string_vector[0],
+                splitted_string_vector[1],
+                splitted_string_vector[3],
+                splitted_string_vector[4],
+                splitted_string_vector[5]
+            );
+            let disk_info = DiskInfo {
+                disk_alpha: disk_alpha_byte as char,
+                used_space: format!("{}{}", splitted_string_vector[0], splitted_string_vector[1]),
+                total_space: format!("{}{}", splitted_string_vector[3], splitted_string_vector[4]),
+                percent: splitted_string_vector[5].trim().parse().unwrap(),
+            };
+
+            disk_info_vector.push(disk_info);
+        }
+
+        return disk_info_vector;
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::process::Command;
     use super::{COMAND_CPU_INFO, COMMAND_MOTHERBOARD_INFO};
-    use crate::sys_info::{SystemInfoFetcher, COMMAND_GPU_INFO};
+    use crate::sys_info::{SystemInfoFetcher, COMMAND_GPU_INFO, DiskInfo};
+    use std::process::Command;
     // use mockall::predicate::*;
     // use mockall::*;
     // use std::{
@@ -266,10 +322,17 @@ mod tests {
         let system_info_fetcher = SystemInfoFetcher {
             sys: &System::new(),
         };
-        let motherboard_command_result = system_info_fetcher.run_command_with_powershell(COMMAND_MOTHERBOARD_INFO);
+        let motherboard_command_result =
+            system_info_fetcher.run_command_with_powershell(COMMAND_MOTHERBOARD_INFO);
 
-        println!("{}", String::from_utf8_lossy(&motherboard_command_result.stdout));
-        println!("{}", String::from_utf8_lossy(&motherboard_command_result.stderr));
+        println!(
+            "{}",
+            String::from_utf8_lossy(&motherboard_command_result.stdout)
+        );
+        println!(
+            "{}",
+            String::from_utf8_lossy(&motherboard_command_result.stderr)
+        );
 
         assert!(motherboard_command_result.status.success());
     }
@@ -281,6 +344,35 @@ mod tests {
         };
         let motherboard_name = system_info_fetcher.motherboard_info();
         println!("{}", motherboard_name);
+    }
+
+    #[test]
+    fn test_parse_disk_info() {
+        let system_info_fetcher = SystemInfoFetcher {
+            sys: &System::new(),
+        };
+
+        let disk_info_vec = system_info_fetcher.parse_disk_info(
+            "content                        371 GiB / 406 GiB 91
+            title                          Disk (C:)
+            content                        472 GiB / 931 GiB 50
+            title                          Disk (D:)",
+        );
+
+        assert_eq!(disk_info_vec, vec![
+            DiskInfo {
+                disk_alpha: 'C',
+                used_space: "371GiB".to_string(),
+                total_space: "406GiB".to_string(),
+                percent: 91
+            },
+            DiskInfo {
+                disk_alpha: 'D',
+                used_space: "472GiB".to_string(),
+                total_space: "931GiB".to_string(),
+                percent: 50
+            }
+        ]);
     }
     // #[test]
     // fn get_gpu_info() {
