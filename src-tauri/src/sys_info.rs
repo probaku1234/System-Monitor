@@ -26,6 +26,7 @@ pub struct SystemInfo {
     pub gpu_name: String,
     pub gpu_load: i8,
     pub motherboard_name: String,
+    pub disk_info: Vec<DiskInfo>
 }
 
 // TODO: unit testing
@@ -41,12 +42,13 @@ impl Default for SystemInfo {
             gpu_name: "".to_string(),
             gpu_load: 0,
             motherboard_name: "".to_string(),
+            disk_info: vec![]
         }
     }
 }
 
-#[derive(Eq, PartialEq, Debug)]
-struct DiskInfo {
+#[derive(Eq, PartialEq, Debug, serde::Serialize)]
+pub struct DiskInfo {
     disk_alpha: char,
     used_space: String,
     total_space: String,
@@ -94,6 +96,7 @@ impl<'a> SystemInfoFetcher<'a> {
         let cpu_load = cpu_info.1;
 
         let motherboard_name = self.motherboard_info();
+        let disk_info = self.disk_info();
 
         sys_info::SystemInfo {
             used_memory,
@@ -105,6 +108,7 @@ impl<'a> SystemInfoFetcher<'a> {
             gpu_name,
             gpu_load,
             motherboard_name,
+            disk_info
         }
     }
 
@@ -221,6 +225,13 @@ impl<'a> SystemInfoFetcher<'a> {
             Err(x) => log::error!("\nCPU temp: {}", x),
         }
         (cpu_temp, cpu_load)
+    }
+
+    fn disk_info(&self) -> Vec<DiskInfo> {
+        let disk_info_result = self.run_command_with_powershell("cd ./script ; ./sysinfo.ps1");
+        let result_string = String::from_utf8_lossy(&disk_info_result.stdout);
+
+        return self.parse_disk_info(&result_string);
     }
 
     fn parse_value(&self, value_name: &str, target_string: &str) -> String {
@@ -373,6 +384,26 @@ mod tests {
                 percent: 50
             }
         ]);
+    }
+
+    #[test]
+    fn pika() {
+        let system_info_fetcher = SystemInfoFetcher {
+            sys: &System::new(),
+        };
+        // let result = Command::new("powershell")
+        // .args(["-Command", "cd ./script ; ./sysinfo.ps1"])
+        // .output()
+        // .expect("fail to execute command");
+        let result = system_info_fetcher.run_command_with_powershell("cd ./script ; ./sysinfo.ps1");
+        println!(
+            "{}",
+            String::from_utf8_lossy(&result.stdout)
+        );
+        println!(
+            "{}",
+            String::from_utf8_lossy(&result.stderr)
+        );
     }
     // #[test]
     // fn get_gpu_info() {
