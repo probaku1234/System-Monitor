@@ -28,7 +28,7 @@ function info_disk {
 
     [System.IO.DriveInfo]::GetDrives().ForEach{
         $diskLetter = $_.Name.SubString(0,2)
-
+		$driveFormat = $_.DriveFormat
         
 		<# try { #>
 			if ($_.TotalSize -gt 0) {
@@ -37,7 +37,7 @@ function info_disk {
 
 				[void]$lines.Add(@{
 					title   = "Disk ($diskLetter)"
-					content = get_level_info "" $diskstyle $usage "$(to_units $used) / $(to_units $_.TotalSize)"
+					content = get_level_info "" $diskstyle $usage "$(to_units $used) / $(to_units $_.TotalSize) $driveFormat"
 				})
 			}
 		<# } catch {
