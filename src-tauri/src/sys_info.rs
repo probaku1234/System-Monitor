@@ -48,6 +48,7 @@ impl Default for SystemInfo {
 }
 
 #[derive(Eq, PartialEq, Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct DiskInfo {
     disk_alpha: char,
     used_space: String,
