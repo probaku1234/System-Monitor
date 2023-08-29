@@ -8,7 +8,8 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
-    "test": "vitest"
+    "test": "vitest",
+    "test-server": "cd ./src-tauri & cargo test"
   },
   "dependencies": {
     "@reduxjs/toolkit": "^1.9.5",
