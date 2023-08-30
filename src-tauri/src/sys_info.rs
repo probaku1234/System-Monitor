@@ -10,8 +10,9 @@ use tauri::regex;
 
 const COMMAND_GPU_INFO: &str =
     "nvidia-smi --query-gpu=temperature.gpu,gpu_name,utilization.gpu --format=csv,noheader,nounits";
-const COMAND_CPU_INFO: &str = "wmic cpu get name";
-const COMMAND_MOTHERBOARD_INFO: &str =
+const COMMAND_GPU_NAME: &str = "nvidia-smi --query-gpu=gpu_name --format=csv,noheader,nounits";
+const COMAND_CPU_NAME: &str = "wmic cpu get name";
+const COMMAND_MOTHERBOARD_NAME: &str =
     "Get-CimInstance Win32_BaseBoard -Property Manufacturer,Product";
 const COMMAND_DISK_MODEL_INFO: &str = "wmic diskdrive get model";
 
@@ -20,32 +21,19 @@ const COMMAND_DISK_MODEL_INFO: &str = "wmic diskdrive get model";
 pub struct SystemInfo {
     pub used_memory: u64,
     pub total_memory: u64,
-    pub cpu_name: String,
     pub cpu_temp: i8,
     pub cpu_load: i8,
     pub gpu_temp: i8,
-    pub gpu_name: String,
     pub gpu_load: i8,
-    pub motherboard_name: String,
-    pub disk_info: Vec<DiskInfo>,
 }
 
-// TODO: unit testing
-impl Default for SystemInfo {
-    fn default() -> Self {
-        Self {
-            used_memory: 0,
-            total_memory: 0,
-            cpu_name: "".to_string(),
-            cpu_temp: 0,
-            cpu_load: 0,
-            gpu_temp: 0,
-            gpu_name: "".to_string(),
-            gpu_load: 0,
-            motherboard_name: "".to_string(),
-            disk_info: vec![],
-        }
-    }
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SystemSpecInfo {
+    pub cpu_name: String,
+    pub gpu_name: String,
+    pub motherboard_name: String,
+    pub disk_info: Vec<DiskInfo>,
 }
 
 #[derive(Eq, PartialEq, Debug, serde::Serialize)]
@@ -90,33 +78,38 @@ impl<'a> SystemInfoFetcher<'a> {
         let gpu_info = self.gpu_info();
 
         let gpu_temp: i8 = gpu_info.0;
-        let gpu_name: String = gpu_info.1;
         let gpu_load: i8 = gpu_info.2;
 
-        let cpu_name = self.cpu_name();
         let cpu_info = self.cpu_info();
         let cpu_temp = cpu_info.0;
         let cpu_load = cpu_info.1;
 
-        let motherboard_name = self.motherboard_info();
-        let disk_info = self.disk_info();
-
         sys_info::SystemInfo {
             used_memory,
             total_memory,
-            cpu_name: cpu_name.to_string(),
             cpu_temp,
             cpu_load,
             gpu_temp,
-            gpu_name,
             gpu_load,
+        }
+    }
+
+    pub fn create_sys_spec_info(&self) -> SystemSpecInfo {
+        let cpu_name = self.cpu_name();
+        let gpu_name = self.gpu_name();
+        let motherboard_name = self.motherboard_info();
+        let disk_info = self.disk_info();
+
+        sys_info::SystemSpecInfo {
+            cpu_name,
+            gpu_name,
             motherboard_name,
             disk_info,
         }
     }
 
     fn cpu_name(&self) -> String {
-        let output = self.run_command(sys_info::COMAND_CPU_INFO);
+        let output = self.run_command(sys_info::COMAND_CPU_NAME);
 
         if !output.status.success() {
             log::error!("CPU Name error {}", String::from_utf8_lossy(&output.stderr));
@@ -132,6 +125,19 @@ impl<'a> SystemInfoFetcher<'a> {
         let cpu_name = lines.next().unwrap();
 
         return cpu_name.to_string();
+    }
+
+    fn gpu_name(&self) -> String {
+        let output = self.run_command(sys_info::COMMAND_GPU_NAME);
+
+        if !output.status.success() {
+            log::error!("GPU Info error {}", String::from_utf8_lossy(&output.stderr));
+            return "".to_string();
+        }
+
+        log::debug!("{}", String::from_utf8_lossy(&output.stdout));
+
+        return String::from_utf8_lossy(&output.stdout).to_string();
     }
 
     fn gpu_info(&self) -> (i8, String, i8) {
@@ -155,7 +161,6 @@ impl<'a> SystemInfoFetcher<'a> {
     }
 
     fn memory_info(&self) -> (u64, u64) {
-        //let sys = self.sys;
         let mut used_memory: u64 = 0;
         let mut total_memory: u64 = 0;
 
@@ -178,7 +183,7 @@ impl<'a> SystemInfoFetcher<'a> {
     }
 
     fn motherboard_info(&self) -> String {
-        let motherboard_command_result = self.run_command_with_powershell(COMMAND_MOTHERBOARD_INFO);
+        let motherboard_command_result = self.run_command_with_powershell(COMMAND_MOTHERBOARD_NAME);
         log::debug!(
             "{}",
             String::from_utf8_lossy(&motherboard_command_result.stdout)
@@ -254,11 +259,7 @@ impl<'a> SystemInfoFetcher<'a> {
         return format!("{}", splitted_string_vector[1].trim());
     }
 
-    fn parse_disk_info(
-        &self,
-        disk_model_vector: Vec<&str>,
-        target_string: &str,
-    ) -> Vec<DiskInfo> {
+    fn parse_disk_info(&self, disk_model_vector: Vec<&str>, target_string: &str) -> Vec<DiskInfo> {
         let mut disk_info_vector = Vec::new();
         let regex_disk_alpha = Regex::new(r"\([A-Z]:\)").unwrap();
         let disk_alpha_matches: Vec<_> = regex_disk_alpha
@@ -314,7 +315,7 @@ impl<'a> SystemInfoFetcher<'a> {
         lines.next();
         while let Some(line) = lines.next() {
             log::debug!("{}", line);
-           
+
             disk_model_vector.push(line.trim());
         }
         disk_model_vector
@@ -323,7 +324,7 @@ impl<'a> SystemInfoFetcher<'a> {
 
 #[cfg(test)]
 mod tests {
-    use super::{COMAND_CPU_INFO, COMMAND_MOTHERBOARD_INFO};
+    use super::{COMAND_CPU_NAME, COMMAND_MOTHERBOARD_NAME};
     use crate::sys_info::{DiskInfo, SystemInfoFetcher, COMMAND_GPU_INFO};
     use std::process::Command;
     // use mockall::predicate::*;
@@ -339,7 +340,7 @@ mod tests {
         let system_info_fetcher = SystemInfoFetcher {
             sys: &System::new(),
         };
-        let cpu_command_result = system_info_fetcher.run_command(COMAND_CPU_INFO);
+        let cpu_command_result = system_info_fetcher.run_command(COMAND_CPU_NAME);
         let gpu_command_result = system_info_fetcher.run_command(COMMAND_GPU_INFO);
 
         println!("{}", String::from_utf8_lossy(&cpu_command_result.stdout));
@@ -365,7 +366,7 @@ mod tests {
             sys: &System::new(),
         };
         let motherboard_command_result =
-            system_info_fetcher.run_command_with_powershell(COMMAND_MOTHERBOARD_INFO);
+            system_info_fetcher.run_command_with_powershell(COMMAND_MOTHERBOARD_NAME);
 
         println!(
             "{}",
@@ -471,7 +472,7 @@ mod tests {
             "Model
             Disk 1
             Disk 2
-            Disk 3"
+            Disk 3",
         );
         assert_eq!(result, vec!["Disk 1", "Disk 2", "Disk 3"]);
     }
