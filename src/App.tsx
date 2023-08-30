@@ -6,17 +6,28 @@ import Main from "./pages/Main";
 import SystemSpec from "./pages/SystemSpec";
 import Monitoring from "./pages/Monitoring";
 import { setInfoAsync } from "./redux/slice/systemInfoSlice";
+import { setSpecInfoAsync, selectSystemSpecInfo } from "./redux/slice/systemSpecInfoSlice";
 import { useAppDispatch } from "./redux/hooks";
-import { useInterval } from "usehooks-ts";
+import { useEffectOnce, useInterval } from "usehooks-ts";
+import { useEffect } from "react";
 
 function App() {
   const currentPage = useAppSelector(selectCurrentPage);
+  const systemSpec = useAppSelector(selectSystemSpecInfo);
   const dispatch = useAppDispatch();
+
+  useEffectOnce(() => {
+    dispatch(setSpecInfoAsync());
+  });
 
   useInterval(() => {
     dispatch(setInfoAsync());
   }, 5000);
 
+  useEffect(() => {
+    console.log(systemSpec);
+  }, [systemSpec])
+  
   function showCurrentPage() {
     switch (currentPage) {
       case "home":
