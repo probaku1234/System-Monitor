@@ -6,11 +6,13 @@ import {
 } from "@reduxjs/toolkit";
 import currentPageReducer from "./slice/currentPageSlice";
 import systemInfoReducer from "./slice/systemInfoSlice";
+import systemSpecInfoReducer from "./slice/systemSpecInfoSlice";
 
 export const store = configureStore({
   reducer: {
     currentPage: currentPageReducer,
     systemInfo: systemInfoReducer,
+    systemInfoSpec: systemSpecInfoReducer,
   },
 });
 
@@ -19,6 +21,7 @@ export const setupStore = (preloadedState?: PreloadedState<RootState>) => {
     reducer: {
       currentPage: currentPageReducer,
       systemInfo: systemInfoReducer,
+      systemInfoSpec: systemSpecInfoReducer,
     },
     preloadedState,
   });
