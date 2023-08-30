@@ -5,18 +5,35 @@ import { it, describe, beforeAll, expect, vi } from "vitest";
 import { screen, fireEvent, waitFor } from "@testing-library/react";
 import { setupStore } from "../redux/store";
 import { setInfoAsync } from "../redux/slice/systemInfoSlice";
+import { setSpecInfoAsync } from "../redux/slice/systemSpecInfoSlice";
 
 beforeAll(() => {
   mockIPC((cmd, _args) => {
     // simulated rust command called "add" that just adds two numbers
     if (cmd === "get_sys_info") {
       return {
-        cpuName: "test cpu",
         usedMemory: 1,
         totalMemory: 5,
-        gpuName: "test gpu",
         gpuTemp: 60,
         gpuLoad: 5,
+        fetching: false,
+        error: "",
+      };
+    }
+    if (cmd === "get_sys_spec_info") {
+      return {
+        cpuName: "test cpu",
+        gpuName: "test gpu",
+        motherboardName: "test motherboard",
+        diskInfo: [
+          {
+            diskAlpha: "C",
+            model: "disk A",
+            percent: 39,
+            totalSpace: "39",
+            usedSpace: "10",
+          },
+        ],
         fetching: false,
         error: "",
       };
@@ -44,6 +61,7 @@ describe("App", () => {
     const store = setupStore();
     await waitFor(() => {
       store.dispatch(setInfoAsync());
+      store.dispatch(setSpecInfoAsync());
     });
 
     renderWithProviders(<App />, { store });

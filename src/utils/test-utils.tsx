@@ -9,6 +9,7 @@ import type { AppStore, RootState } from "../redux/store";
 // As a basic setup, import your same slice reducers
 import currentPageReducer from "../redux/slice/currentPageSlice";
 import systemInfoReducer from "../redux/slice/systemInfoSlice";
+import systemSpecInfoReducer from "../redux/slice/systemSpecInfoSlice";
 
 // This type interface extends the default options for render from RTL, as well
 // as allows the user to specify other things such as initialState, store.
@@ -25,12 +26,19 @@ export function renderWithProviders(
         value: "home",
       },
       systemInfo: {
-        cpuName: "",
+        cpuTemp: 0,
+        cpuLoad: 0,
         usedMemory: 0,
         totalMemory: 0,
         gpuLoad: 0,
-        gpuName: "",
         gpuTemp: 0,
+        fetching: true,
+      },
+      systemInfoSpec: {
+        cpuName: "",
+        gpuName: "",
+        motherboardName: "",
+        diskInfo: [],
         fetching: true,
       },
     },
@@ -39,6 +47,7 @@ export function renderWithProviders(
       reducer: {
         currentPage: currentPageReducer,
         systemInfo: systemInfoReducer,
+        systemInfoSpec: systemSpecInfoReducer,
       },
       preloadedState,
     }),

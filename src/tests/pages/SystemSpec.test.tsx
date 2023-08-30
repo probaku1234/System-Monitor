@@ -3,20 +3,26 @@ import { renderWithProviders } from "../../utils/test-utils";
 import { it, describe, beforeAll, expect, vi } from "vitest";
 import { screen, fireEvent, waitFor } from "@testing-library/react";
 import { setupStore } from "../../redux/store";
-import { setInfoAsync } from "../../redux/slice/systemInfoSlice";
+import { setSpecInfoAsync } from "../../redux/slice/systemSpecInfoSlice";
 import { mockIPC } from "@tauri-apps/api/mocks";
 
 beforeAll(() => {
   mockIPC((cmd, _args) => {
     // simulated rust command called "add" that just adds two numbers
-    if (cmd === "get_sys_info") {
+    if (cmd === "get_sys_spec_info") {
       return {
         cpuName: "test cpu",
-        usedMemory: 1,
-        totalMemory: 5,
         gpuName: "test gpu",
-        gpuTemp: 60,
-        gpuLoad: 5,
+        motherboardName: "test motherboard",
+        diskInfo: [
+          {
+            diskAlpha: "C",
+            model: "disk A",
+            percent: 39,
+            totalSpace: "39",
+            usedSpace: "10",
+          },
+        ],
         fetching: false,
         error: "",
       };
@@ -35,15 +41,14 @@ describe("System Spec", () => {
     renderWithProviders(<SystemSpec />);
 
     expect(screen.getByTestId(/loader/i)).toBeDefined();
-  })
+  });
 
   it("renders system info", async () => {
     const store = setupStore();
     await waitFor(() => {
-      store.dispatch(setInfoAsync());
+      store.dispatch(setSpecInfoAsync());
     });
 
-    console.log(store.getState().systemInfo.cpuName);
     renderWithProviders(<SystemSpec />, { store });
 
     expect(screen.getByText(/test cpu/i)).toBeDefined();
