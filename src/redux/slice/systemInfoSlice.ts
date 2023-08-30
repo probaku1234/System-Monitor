@@ -11,8 +11,18 @@ export interface SystemInfoState {
   gpuName: string;
   gpuTemp: number;
   gpuLoad: number;
+  motherboardName: string;
+  diskInfo: DiskInfoState[];
   fetching: boolean;
   error?: string;
+}
+
+export interface DiskInfoState {
+  model: string;
+  diskAlpha: string;
+  usedSpace: string;
+  totalSpace: string;
+  percent: number;
 }
 
 const initialState: SystemInfoState = {
@@ -24,6 +34,8 @@ const initialState: SystemInfoState = {
   gpuName: "",
   gpuTemp: 0,
   gpuLoad: 0,
+  motherboardName: "",
+  diskInfo: [],
   fetching: true,
   error: "",
 };
@@ -43,15 +55,21 @@ export const systemInfoSlice = createSlice({
     //   state.fetching = true;
     // });
     builder.addCase(setInfoAsync.fulfilled, (state, action) => {
-      state.cpuName = action.payload.cpuName;
-      state.cpuTemp = action.payload.cpuTemp;
-      state.cpuLoad = action.payload.cpuLoad;
-      state.usedMemory = action.payload.usedMemory;
-      state.totalMemory = action.payload.totalMemory;
-      state.gpuName = action.payload.gpuName;
-      state.gpuTemp = action.payload.gpuTemp;
-      state.gpuLoad = action.payload.gpuLoad;
-      state.fetching = false;
+      console.log(action.payload);
+      // state.cpuName = action.payload.cpuName;
+      // state.cpuTemp = action.payload.cpuTemp;
+      // state.cpuLoad = action.payload.cpuLoad;
+      // state.usedMemory = action.payload.usedMemory;
+      // state.totalMemory = action.payload.totalMemory;
+      // state.gpuName = action.payload.gpuName;
+      // state.gpuTemp = action.payload.gpuTemp;
+      // state.gpuLoad = action.payload.gpuLoad;
+      // state.fetching = false;
+      return {
+        ...action.payload,
+        fetching: false,
+        error: "",
+      };
     });
     builder.addCase(setInfoAsync.rejected, (state, error) => {
       state.fetching = false;
