@@ -3,44 +3,35 @@ import { RootState } from "../store";
 import { fetchSystemInfo } from "./systemInfoAPI";
 
 export interface SystemInfoState {
-  cpuName: string;
+  // cpuName: string;
   cpuTemp: number;
   cpuLoad: number;
   usedMemory: number;
   totalMemory: number;
-  gpuName: string;
+  // gpuName: string;
   gpuTemp: number;
   gpuLoad: number;
-  motherboardName: string;
-  diskInfo: DiskInfoState[];
+  // motherboardName: string;
   fetching: boolean;
   error?: string;
 }
 
-export interface DiskInfoState {
-  model: string;
-  diskAlpha: string;
-  usedSpace: string;
-  totalSpace: string;
-  percent: number;
-}
 
 const initialState: SystemInfoState = {
-  cpuName: "",
+  // cpuName: "",
   cpuTemp: 0,
   cpuLoad: 0,
   usedMemory: 0,
   totalMemory: 0,
-  gpuName: "",
+  // gpuName: "",
   gpuTemp: 0,
   gpuLoad: 0,
-  motherboardName: "",
-  diskInfo: [],
+  // motherboardName: "",
   fetching: true,
   error: "",
 };
 
-export const setInfoAsync = createAsyncThunk("", async () => {
+export const setInfoAsync = createAsyncThunk("fetchSystemInfo", async () => {
   const response = await fetchSystemInfo();
 
   return response;
