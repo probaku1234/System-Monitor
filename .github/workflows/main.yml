@@ -24,5 +24,9 @@ jobs:
       - name: install frontend dependencies
         run: npm install --force # change this to npm or pnpm depending on which one you use
       - uses: tauri-apps/tauri-action@v0
+      - name: test UI
+        run: npm run test
+      - name: test Server
+        run: npm run test-server
         # env:
         #   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
