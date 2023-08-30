@@ -45,7 +45,7 @@ export const systemInfoSlice = createSlice({
     // builder.addCase(setInfoAsync.pending, (state) => {
     //   state.fetching = true;
     // });
-    builder.addCase(setInfoAsync.fulfilled, (state, action) => {
+    builder.addCase(setInfoAsync.fulfilled, (_state, action) => {
       console.log(action.payload);
       // state.cpuName = action.payload.cpuName;
       // state.cpuTemp = action.payload.cpuTemp;

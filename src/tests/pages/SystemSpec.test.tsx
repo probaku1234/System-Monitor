@@ -1,7 +1,7 @@
 import SystemSpec from "../../pages/SystemSpec";
 import { renderWithProviders } from "../../utils/test-utils";
-import { it, describe, beforeAll, expect, vi } from "vitest";
-import { screen, fireEvent, waitFor } from "@testing-library/react";
+import { it, describe, beforeAll, expect } from "vitest";
+import { screen, waitFor } from "@testing-library/react";
 import { setupStore } from "../../redux/store";
 import { setSpecInfoAsync } from "../../redux/slice/systemSpecInfoSlice";
 import { mockIPC } from "@tauri-apps/api/mocks";

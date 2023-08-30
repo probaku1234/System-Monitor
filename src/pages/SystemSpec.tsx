@@ -1,5 +1,4 @@
 import { useAppSelector } from "../redux/hooks";
-import { selectSystemInfo } from "../redux/slice/systemInfoSlice";
 import { selectSystemSpecInfo } from "../redux/slice/systemSpecInfoSlice";
 import ClipLoader from "react-spinners/ClipLoader";
 

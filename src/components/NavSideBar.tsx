@@ -2,14 +2,10 @@ import { Navigation } from "react-minimal-side-navigation";
 import React from "react";
 import "./NavSideBar.css";
 import "react-minimal-side-navigation/lib/ReactMinimalSideNavigation.css";
-import { useAppSelector, useAppDispatch } from "../redux/hooks";
-import {
-  setCurrentPage,
-  selectCurrentPage,
-} from "../redux/slice/currentPageSlice";
+import { useAppDispatch } from "../redux/hooks";
+import { setCurrentPage } from "../redux/slice/currentPageSlice";
 
 export const NavSidebar = () => {
-  const currentPage = useAppSelector(selectCurrentPage);
   const dispatch = useAppDispatch();
 
   return (
@@ -33,7 +29,9 @@ export const NavSidebar = () => {
           ]}
           onSelect={(itemId) => {
             dispatch(
-              setCurrentPage(itemId.itemId as "home" | "system_spec" | "monitoring")
+              setCurrentPage(
+                itemId.itemId as "home" | "system_spec" | "monitoring"
+              )
             );
           }}
         />

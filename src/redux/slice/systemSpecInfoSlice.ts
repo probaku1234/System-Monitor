@@ -39,7 +39,7 @@ export const systemSpecInfoSlice = createSlice({
   initialState,
   reducers: {},
   extraReducers(builder) {
-    builder.addCase(setSpecInfoAsync.fulfilled, (state, action) => {
+    builder.addCase(setSpecInfoAsync.fulfilled, (_state, action) => {
       console.log(action.payload);
       return {
         ...action.payload,

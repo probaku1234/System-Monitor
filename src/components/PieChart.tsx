@@ -39,7 +39,7 @@ export const PieChart: React.FC<PiChartProps> = ({ data }) => {
             { x: 2, y: 100 - data },
           ]}
         >
-          {(newProps) => {
+          {(_newProps) => {
             return (
               <VictoryLabel
                 textAnchor="middle"

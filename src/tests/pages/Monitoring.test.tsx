@@ -1,7 +1,7 @@
 import Monitoring from "../../pages/Monitoring";
 import { renderWithProviders } from "../../utils/test-utils";
-import { it, describe, beforeAll, expect, vi } from "vitest";
-import { screen, fireEvent, waitFor } from "@testing-library/react";
+import { it, describe, beforeAll, expect } from "vitest";
+import { screen, waitFor } from "@testing-library/react";
 import { setupStore } from "../../redux/store";
 import { setInfoAsync } from "../../redux/slice/systemInfoSlice";
 import { mockIPC } from "@tauri-apps/api/mocks";
@@ -37,7 +37,7 @@ describe("Monitoring", () => {
     renderWithProviders(<Monitoring />);
 
     expect(screen.getByTestId(/loader/i)).toBeDefined();
-  })
+  });
 
   it("renders system info", async () => {
     const store = setupStore();
@@ -45,7 +45,6 @@ describe("Monitoring", () => {
       store.dispatch(setInfoAsync());
     });
 
-    console.log(store.getState().systemInfo.cpuName);
     renderWithProviders(<Monitoring />, { store });
 
     expect(screen.getByText(/60/i)).toBeDefined();

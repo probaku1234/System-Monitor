@@ -1,7 +1,7 @@
 import App from "../App";
 import { mockIPC } from "@tauri-apps/api/mocks";
 import { renderWithProviders } from "../utils/test-utils";
-import { it, describe, beforeAll, expect, vi } from "vitest";
+import { it, describe, beforeAll, expect } from "vitest";
 import { screen, fireEvent, waitFor } from "@testing-library/react";
 import { setupStore } from "../redux/store";
 import { setInfoAsync } from "../redux/slice/systemInfoSlice";
