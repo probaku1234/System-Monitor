@@ -3,6 +3,7 @@ import { useAppSelector } from "../redux/hooks";
 import { selectSystemInfo } from "../redux/slice/systemInfoSlice";
 import ClipLoader from "react-spinners/ClipLoader";
 import { GaugeChart } from "../components/GaugeChart";
+import "./Monitoring.css";
 
 function Monitoring() {
   const {
@@ -19,6 +20,10 @@ function Monitoring() {
     return Math.floor((usedMemory / totalMemory) * 100);
   }
 
+  function byteToGByte(bytesValue: number) {
+    return (bytesValue / (1000 * 1000 * 1000)).toFixed(2);
+  }
+
   return (
     <>
       <h1>Monitoring</h1>
@@ -29,10 +34,26 @@ function Monitoring() {
         <>
           <SystemInfoChart type="GPU" load={gpu_load} temp={gpu_temp} />
           <SystemInfoChart type="CPU" load={cpuLoad} temp={cpuTemp} />
-          <h1>RAM</h1>
-          <GaugeChart temp={getUsedMemoryPercentage()} label="Load" unit="%" />
-          <p>Total memory: {totalMemory}</p>
-          <p>Used Memory: {usedMemory}</p>
+          <div>
+            <h1>RAM</h1>
+
+            <div className="ram-usage-chart">
+              <GaugeChart
+                temp={getUsedMemoryPercentage()}
+                label="Load"
+                unit="%"
+              />
+            </div>
+
+            <div>
+              <p className="ram-usage-number">
+                Total memory: {byteToGByte(totalMemory)}GB
+              </p>
+              <p className="ram-usage-number">
+                Used Memory: {byteToGByte(usedMemory)}GB
+              </p>
+            </div>
+          </div>
         </>
       )}
     </>
