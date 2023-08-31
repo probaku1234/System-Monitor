@@ -1,6 +1,7 @@
 import { useAppSelector } from "../redux/hooks";
 import { selectSystemSpecInfo } from "../redux/slice/systemSpecInfoSlice";
 import ClipLoader from "react-spinners/ClipLoader";
+import "./SystemSpec.css";
 
 function SystemSpec() {
   const systemSpecInfo = useAppSelector(selectSystemSpecInfo);
@@ -14,12 +15,28 @@ function SystemSpec() {
           <ClipLoader color={"#6e36d6"} size={80} data-testid="loader" />
         ) : (
           <>
-            <h3>CPU : {systemSpecInfo?.cpuName}</h3>
-            <h3>GPU : {systemSpecInfo?.gpuName}</h3>
-            <h3>Motherboard: {systemSpecInfo?.motherboardName}</h3>
-            {systemSpecInfo?.diskInfo.map((info, index) => (
-              <h3 key={index}>{info.model}</h3>
-            ))}
+            <div className="hardware">
+              <h3 className="hardware-title">CPU</h3>
+              <p className="hardware-name">{systemSpecInfo?.cpuName}</p>
+            </div>
+            <div className="hardware">
+              <h3 className="hardware-title">GPU</h3>
+              <p className="hardware-name">{systemSpecInfo?.gpuName}</p>
+            </div>
+            <div className="hardware">
+              <h3 className="hardware-title">Motherboard</h3>
+              <p className="hardware-name">
+                {systemSpecInfo?.motherboardName}
+              </p>
+            </div>
+            <div className="hardware">
+              <h3 className="hardware-title">Drive</h3>
+              {systemSpecInfo?.diskInfo.map((info, index) => (
+                <p key={index} className="hardware-name">
+                  {info.model}
+                </p>
+              ))}
+            </div>
           </>
         )}
         {/* <h3>Motherboard : {systemInfo?.motherBoardManufact} {systemInfo?.motherBoardName}</h3> */}
