@@ -3,6 +3,8 @@ import { useAppSelector } from "../redux/hooks";
 import { selectSystemInfo } from "../redux/slice/systemInfoSlice";
 import ClipLoader from "react-spinners/ClipLoader";
 import { GaugeChart } from "../components/GaugeChart";
+import DiskUsageBar from "../components/DiskUsageBar";
+import { selectSystemSpecInfo } from "../redux/slice/systemSpecInfoSlice";
 import "./Monitoring.css";
 
 function Monitoring() {
@@ -15,6 +17,7 @@ function Monitoring() {
     totalMemory,
     fetching,
   } = useAppSelector(selectSystemInfo);
+  const { diskInfo } = useAppSelector(selectSystemSpecInfo);
 
   function getUsedMemoryPercentage() {
     return Math.floor((usedMemory / totalMemory) * 100);
@@ -22,6 +25,10 @@ function Monitoring() {
 
   function byteToGByte(bytesValue: number) {
     return (bytesValue / (1000 * 1000 * 1000)).toFixed(2);
+  }
+
+  function getDiskBarLabel(usedSpace: string, totalSpace: string) {
+    return `${usedSpace}/${totalSpace}`;
   }
 
   return (
@@ -33,7 +40,9 @@ function Monitoring() {
       ) : (
         <>
           <SystemInfoChart type="GPU" load={gpu_load} temp={gpu_temp} />
+          <hr />
           <SystemInfoChart type="CPU" load={cpuLoad} temp={cpuTemp} />
+          <hr />
           <div>
             <h1>RAM</h1>
 
@@ -53,6 +62,18 @@ function Monitoring() {
                 Used Memory: {byteToGByte(usedMemory)}GB
               </p>
             </div>
+          </div>
+          <hr />
+          <div>
+            <h1>DISK</h1>
+            {diskInfo.map((info, index) => (
+              <DiskUsageBar
+                key={index}
+                data={info.percent}
+                diskAlpha={info.diskAlpha}
+                label={getDiskBarLabel(info.usedSpace, info.totalSpace)}
+              />
+            ))}
           </div>
         </>
       )}

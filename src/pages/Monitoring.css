@@ -1,7 +1,11 @@
 .ram-usage-chart {
-    float: left;
+  float: left;
 }
 
 .ram-usage-number {
-    font-size: xx-large;
+  font-size: xx-large;
+}
+
+hr {
+  width: 90%;
 }
