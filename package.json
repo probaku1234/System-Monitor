@@ -12,6 +12,7 @@
     "test-server": "cd ./src-tauri & cargo test"
   },
   "dependencies": {
+    "@ramonak/react-progress-bar": "^5.0.3",
     "@reduxjs/toolkit": "^1.9.5",
     "@tauri-apps/api": "^1.4.0",
     "jsdom": "^22.1.0",
