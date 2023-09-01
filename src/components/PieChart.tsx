@@ -1,9 +1,15 @@
 import { VictoryPie, VictoryAnimation, VictoryLabel } from "victory";
 import React from "react";
-import "./PieChart.css"
+import "./PieChart.css";
 
 type PiChartProps = {
   data: number;
+};
+
+const getColorByData = (data: number) => {
+  if (data <= 40) return "green";
+  if (data <= 80) return "yellow";
+  return "red";
 };
 
 export const PieChart: React.FC<PiChartProps> = ({ data }) => {
@@ -21,13 +27,12 @@ export const PieChart: React.FC<PiChartProps> = ({ data }) => {
             { x: 2, y: 100 - data },
           ]}
           innerRadius={120}
-          cornerRadius={25}
           labels={() => null}
           style={{
             data: {
               fill: ({ datum }) => {
-                const color = datum.y > 30 ? "green" : "red";
-                return datum.x === 1 ? color : "transparent";
+                const color = getColorByData(datum.y);
+                return datum.x === 1 ? color : "#EEEEEE";
               },
             },
           }}
