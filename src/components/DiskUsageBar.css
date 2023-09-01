@@ -1,0 +1,16 @@
+h1 {
+  margin: 0px;
+}
+
+.disk-usage-wrapper {
+  display: flex;
+  margin-top: 10px;
+  width: 95%;
+  align-content: center;
+}
+
+.disk-usage-bar {
+  width: 100%;
+  height: 100%;
+  padding-left: 10px;
+}
