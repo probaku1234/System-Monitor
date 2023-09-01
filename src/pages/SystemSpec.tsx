@@ -39,7 +39,6 @@ function SystemSpec() {
             </div>
           </>
         )}
-        {/* <h3>Motherboard : {systemInfo?.motherBoardManufact} {systemInfo?.motherBoardName}</h3> */}
       </div>
     </>
   );

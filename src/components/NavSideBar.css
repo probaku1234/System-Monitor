@@ -3,4 +3,5 @@
   border-right: groove;
   height: 100%;
   width: 15%;
+  overflow: hidden;
 }
