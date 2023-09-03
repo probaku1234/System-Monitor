@@ -6,9 +6,15 @@ use simple_logger::SimpleLogger;
 mod sys_info;
 //use lru::LruCache;
 use std::num::NonZeroUsize;
-use systemstat::{Platform, System};
+// use systemstat::{Platform, System};
+use sysinfo::{CpuExt, System, SystemExt};
 use tauri::{CustomMenuItem, SystemTray, SystemTrayMenu};
 use tauri::{Manager, State, SystemTrayEvent, SystemTrayMenuItem};
+use std::{sync::Mutex};
+
+struct SysStorage {
+    sys: Mutex<System>
+}
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
 #[tauri::command]
@@ -17,15 +23,17 @@ fn greet(name: &str) -> String {
 }
 
 #[tauri::command]
-fn get_sys_info(sys: State<System>) -> sys_info::SystemInfo {
-    let system_info_fetcher = SystemInfoFetcher::new(sys.inner());
+fn get_sys_info(sys_storage: State<SysStorage>) -> sys_info::SystemInfo {
+    let mut sys = sys_storage.sys.lock().unwrap();
+    let mut system_info_fetcher = SystemInfoFetcher::new(&mut sys);
 
     system_info_fetcher.create_sys_info()
 }
 
 #[tauri::command]
-fn get_sys_spec_info(sys: State<System>) -> sys_info::SystemSpecInfo {
-    let system_info_fetcher = SystemInfoFetcher::new(sys.inner());
+fn get_sys_spec_info(sys_storage: State<SysStorage>) -> sys_info::SystemSpecInfo {
+    let mut sys = sys_storage.sys.lock().unwrap();
+    let system_info_fetcher = SystemInfoFetcher::new(&mut sys);
 
     system_info_fetcher.create_sys_spec_info()
 }
@@ -47,6 +55,7 @@ fn main() {
         .on_system_tray_event(|app, event| match event {
             SystemTrayEvent::MenuItemClick { id, .. } => match id.as_str() {
                 "quit" => {
+                    log::info!("tauri app terminated");
                     std::process::exit(0);
                 }
                 "show" => {
@@ -58,13 +67,6 @@ fn main() {
             _ => {}
         })
         .plugin(tauri_plugin_store::Builder::default().build())
-        // .setup(|app| {
-        //     let mut cache = LruCache::new(NonZeroUsize::new(2).unwrap());
-        //     cache.put("apple", "apple");
-        //     cache.put("banana", "banana");
-        //     LruCache::
-        //     Ok(())
-        // })
         .on_window_event(|event| match event.event() {
             tauri::WindowEvent::CloseRequested { api, .. } => {
                 event.window().hide().unwrap();
@@ -72,8 +74,7 @@ fn main() {
             }
             _ => {}
         })
-        .manage(System::new())
-        //.manage(cache)
+        .manage(SysStorage {sys: System::new().into()})
         .invoke_handler(tauri::generate_handler![
             greet,
             get_sys_info,

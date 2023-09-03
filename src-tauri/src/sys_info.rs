@@ -3,7 +3,8 @@ use regex::Regex;
 use std::process::{Command, Output};
 use std::thread;
 use std::time::Duration;
-use systemstat::{saturating_sub_bytes, Platform, System};
+// use systemstat::{saturating_sub_bytes, Platform, System};
+use sysinfo::{CpuExt, System, SystemExt};
 use tauri::regex;
 // use mockall::*;
 // use mockall::predicate::*;
@@ -47,12 +48,12 @@ pub struct DiskInfo {
 }
 
 pub struct SystemInfoFetcher<'a> {
-    sys: &'a System,
+    sys: &'a mut System,
 }
 
 // #[automock]
 impl<'a> SystemInfoFetcher<'a> {
-    pub fn new(sys: &'a System) -> Self {
+    pub fn new(sys: &'a mut System) -> Self {
         Self { sys }
     }
 
@@ -70,7 +71,7 @@ impl<'a> SystemInfoFetcher<'a> {
             .expect("fail to execute command");
     }
 
-    pub fn create_sys_info(&self) -> SystemInfo {
+    pub fn create_sys_info(&mut self) -> SystemInfo {
         let memory_info = self.memory_info();
         let used_memory = memory_info.0;
         let total_memory = memory_info.1;
@@ -160,24 +161,28 @@ impl<'a> SystemInfoFetcher<'a> {
         return (gpu_temp, gpu_name, gpu_load);
     }
 
-    fn memory_info(&self) -> (u64, u64) {
+    fn memory_info(&mut self) -> (u64, u64) {
         let mut used_memory: u64 = 0;
         let mut total_memory: u64 = 0;
 
-        match self.sys.memory() {
-            Ok(mem) => {
-                used_memory = saturating_sub_bytes(mem.total, mem.free).as_u64();
-                total_memory = mem.total.as_u64();
-                log::debug!(
-                    "\nMemory: {} used / {} ({} bytes) total ({:?})",
-                    saturating_sub_bytes(mem.total, mem.free),
-                    mem.total,
-                    mem.total.as_u64(),
-                    mem.platform_memory
-                )
-            }
-            Err(x) => log::error!("\nMemory: error: {}", x),
-        }
+        // match self.sys.memory() {
+        //     Ok(mem) => {
+        //         used_memory = saturating_sub_bytes(mem.total, mem.free).as_u64();
+        //         total_memory = mem.total.as_u64();
+        //         log::debug!(
+        //             "\nMemory: {} used / {} ({} bytes) total ({:?})",
+        //             saturating_sub_bytes(mem.total, mem.free),
+        //             mem.total,
+        //             mem.total.as_u64(),
+        //             mem.platform_memory
+        //         )
+        //     }
+        //     Err(x) => log::error!("\nMemory: error: {}", x),
+        // }
+
+        self.sys.refresh_memory();
+        used_memory = self.sys.used_memory();
+        total_memory = self.sys.total_memory();
 
         return (used_memory, total_memory);
     }
@@ -203,35 +208,41 @@ impl<'a> SystemInfoFetcher<'a> {
         format!("{} {}", manufacturer_name, product_name)
     }
 
-    fn cpu_info(&self) -> (i8, i8) {
+    fn cpu_info(&mut self) -> (i8, i8) {
         let mut cpu_temp = 0;
         let mut cpu_load = 0;
 
-        match self.sys.cpu_load_aggregate() {
-            Ok(cpu) => {
-                log::debug!("\nMeasuring CPU load...");
-                thread::sleep(Duration::from_secs(1));
-                let cpu = cpu.done().unwrap();
-                log::debug!(
-                    "CPU load: {}% user, {}% nice, {}% system, {}% intr, {}% idle ",
-                    cpu.user * 100.0,
-                    cpu.nice * 100.0,
-                    cpu.system * 100.0,
-                    cpu.interrupt * 100.0,
-                    cpu.idle * 100.0
-                );
-                cpu_load = 100 - (cpu.idle * 100.0) as i8;
-            }
-            Err(x) => log::error!("\nCPU load: error: {}", x),
+        // match self.sys.cpu_load_aggregate() {
+        //     Ok(cpu) => {
+        //         log::debug!("\nMeasuring CPU load...");
+        //         thread::sleep(Duration::from_secs(1));
+        //         let cpu = cpu.done().unwrap();
+        //         log::debug!(
+        //             "CPU load: {}% user, {}% nice, {}% system, {}% intr, {}% idle ",
+        //             cpu.user * 100.0,
+        //             cpu.nice * 100.0,
+        //             cpu.system * 100.0,
+        //             cpu.interrupt * 100.0,
+        //             cpu.idle * 100.0
+        //         );
+        //         cpu_load = 100 - (cpu.idle * 100.0) as i8;
+        //     }
+        //     Err(x) => log::error!("\nCPU load: error: {}", x),
+        // }
+
+        // match self.sys.cpu_temp() {
+        //     Ok(temp) => {
+        //         cpu_temp = temp as i8;
+        //         log::debug!("\nCPU temp: {}", temp)
+        //     }
+        //     Err(x) => log::error!("\nCPU temp: {}", x),
+        // }
+        self.sys.refresh_cpu();
+        for cpu in self.sys.cpus() {
+            println!("{} {}%", cpu.name(), cpu.cpu_usage());
+            
         }
 
-        match self.sys.cpu_temp() {
-            Ok(temp) => {
-                cpu_temp = temp as i8;
-                log::debug!("\nCPU temp: {}", temp)
-            }
-            Err(x) => log::error!("\nCPU temp: {}", x),
-        }
         (cpu_temp, cpu_load)
     }
 
@@ -333,12 +344,13 @@ mod tests {
     //     os::windows::process::ExitStatusExt,
     //     process::{Command, ExitCode, ExitStatus, Output},
     // };
-    use systemstat::{Platform, System};
+    // use systemstat::{Platform, System};
+    use sysinfo::{CpuExt, System, SystemExt};
 
     #[test]
     fn test_run_command() {
         let system_info_fetcher = SystemInfoFetcher {
-            sys: &System::new(),
+            sys: &mut System::new(),
         };
         let cpu_command_result = system_info_fetcher.run_command(COMAND_CPU_NAME);
         let gpu_command_result = system_info_fetcher.run_command(COMMAND_GPU_INFO);
@@ -353,7 +365,7 @@ mod tests {
     #[test]
     fn test_run_command_with_invalid_command() {
         let system_info_fetcher = SystemInfoFetcher {
-            sys: &System::new(),
+            sys: &mut System::new(),
         };
         let result = system_info_fetcher.run_command("invalid command");
 
@@ -363,7 +375,7 @@ mod tests {
     #[test]
     fn test_run_command_with_powershell() {
         let system_info_fetcher = SystemInfoFetcher {
-            sys: &System::new(),
+            sys: &mut System::new(),
         };
         let motherboard_command_result =
             system_info_fetcher.run_command_with_powershell(COMMAND_MOTHERBOARD_NAME);
@@ -383,7 +395,7 @@ mod tests {
     #[test]
     fn test_motherboard() {
         let system_info_fetcher = SystemInfoFetcher {
-            sys: &System::new(),
+            sys: &mut System::new(),
         };
         let motherboard_name = system_info_fetcher.motherboard_info();
         println!("{}", motherboard_name);
@@ -392,7 +404,7 @@ mod tests {
     #[test]
     fn test_parse_disk_info() {
         let system_info_fetcher = SystemInfoFetcher {
-            sys: &System::new(),
+            sys: &mut System::new(),
         };
 
         let disk_model_vector = vec!["disk 1", "disk 2"];
@@ -428,7 +440,7 @@ mod tests {
     #[test]
     fn test_parse_disk_info_should_not_include_fat32_file_system_disk() {
         let system_info_fetcher = SystemInfoFetcher {
-            sys: &System::new(),
+            sys: &mut System::new(),
         };
 
         let disk_model_vector = vec!["disk 1", "disk 2", "disk 3"];
@@ -466,7 +478,7 @@ mod tests {
     #[test]
     fn test_parse_disk_model() {
         let system_info_fetcher = SystemInfoFetcher {
-            sys: &System::new(),
+            sys: &mut System::new(),
         };
         let result = system_info_fetcher.parse_disk_model(
             "Model
@@ -479,16 +491,17 @@ mod tests {
 
     #[test]
     fn pika() {
-        let system_info_fetcher = SystemInfoFetcher {
-            sys: &System::new(),
+        let mut system_info_fetcher = SystemInfoFetcher {
+            sys: &mut System::new(),
         };
         // let result = Command::new("powershell")
         // .args(["-Command", "cd ./script ; ./sysinfo.ps1"])
         // .output()
         // .expect("fail to execute command");
-        let result = system_info_fetcher.run_command_with_powershell("cd ./script ; ./sysinfo.ps1");
-        println!("{}", String::from_utf8_lossy(&result.stdout));
-        println!("{}", String::from_utf8_lossy(&result.stderr));
+        // let result = system_info_fetcher.run_command_with_powershell("cd ./script ; ./sysinfo.ps1");
+        // println!("{}", String::from_utf8_lossy(&result.stdout));
+        // println!("{}", String::from_utf8_lossy(&result.stderr));
+        system_info_fetcher.cpu_info();
     }
     // #[test]
     // fn get_gpu_info() {
