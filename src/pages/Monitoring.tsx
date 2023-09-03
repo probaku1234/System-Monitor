@@ -28,7 +28,7 @@ function Monitoring() {
   }
 
   function getDiskBarLabel(usedSpace: string, totalSpace: string) {
-    return `${usedSpace}/${totalSpace}`;
+    return `${usedSpace} / ${totalSpace}`;
   }
 
   return (
