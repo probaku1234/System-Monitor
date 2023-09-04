@@ -1,6 +1,8 @@
 import { VictoryPie, VictoryAnimation, VictoryLabel } from "victory";
 import React from "react";
 import "./PieChart.css";
+import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
+import "react-circular-progressbar/dist/styles.css";
 
 type PiChartProps = {
   data: number;
@@ -16,7 +18,7 @@ export const PieChart: React.FC<PiChartProps> = ({ data }) => {
   return (
     <div className="pie-chart">
       <p className="pie-chart-load-title">Load</p>
-      <svg viewBox="0 0 400 400" width="100%" height="100%">
+      {/* <svg viewBox="0 0 400 400" width="100%" height="100%">
         <VictoryPie
           standalone={false}
           animate={{ duration: 1000 }}
@@ -57,7 +59,15 @@ export const PieChart: React.FC<PiChartProps> = ({ data }) => {
             );
           }}
         </VictoryAnimation>
-      </svg>
+      </svg> */}
+      <CircularProgressbar
+        value={data}
+        text={`${data}%`}
+        styles={buildStyles({
+          textColor: getColorByData(data),
+          pathColor: getColorByData(data),
+        })}
+      />
     </div>
   );
 };
