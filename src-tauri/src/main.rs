@@ -4,13 +4,10 @@
 use crate::sys_info::SystemInfoFetcher;
 use simple_logger::SimpleLogger;
 mod sys_info;
-//use lru::LruCache;
-use std::num::NonZeroUsize;
-// use systemstat::{Platform, System};
-use sysinfo::{CpuExt, System, SystemExt};
+use sysinfo::{System, SystemExt};
 use tauri::{CustomMenuItem, SystemTray, SystemTrayMenu};
 use tauri::{Manager, State, SystemTrayEvent, SystemTrayMenuItem};
-use std::{sync::Mutex};
+use std::sync::Mutex;
 
 struct SysStorage {
     sys: Mutex<System>
@@ -33,7 +30,7 @@ fn get_sys_info(sys_storage: State<SysStorage>) -> sys_info::SystemInfo {
 #[tauri::command]
 fn get_sys_spec_info(sys_storage: State<SysStorage>) -> sys_info::SystemSpecInfo {
     let mut sys = sys_storage.sys.lock().unwrap();
-    let system_info_fetcher = SystemInfoFetcher::new(&mut sys);
+    let mut system_info_fetcher = SystemInfoFetcher::new(&mut sys);
 
     system_info_fetcher.create_sys_spec_info()
 }
