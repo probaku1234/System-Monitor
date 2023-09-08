@@ -6,28 +6,15 @@ import { useTheme } from "@table-library/react-table-library/theme";
 import { getTheme } from "@table-library/react-table-library/baseline";
 import { useSort } from "@table-library/react-table-library/sort";
 import { Action, State } from "@table-library/react-table-library/types/common";
+import { useAppSelector } from "../redux/hooks";
+import { selectSystemInfo } from "../redux/slice/systemInfoSlice";
+import { PorcessInfoState } from "../redux/slice/systemInfoSlice";
+import { byteToMByte } from "../utils/util-functions";
 import "./ProcessTable.css";
 
-type processInfo = {
-  name: string;
-  cpuUsage: number;
-  memoryUsage: number;
-};
-
-const nodes = [
-  {
-    name: "p1",
-    cpuUsage: 20,
-    memoryUsage: 30,
-  },
-  {
-    name: "p2",
-    cpuUsage: 30,
-    memoryUsage: 20,
-  },
-];
-
 export const ProcessTable = () => {
+  const { processInfo } = useAppSelector(selectSystemInfo);
+  const nodes = processInfo.slice(0, 10);
   const data = { nodes };
   const theme = useTheme(getTheme());
   const sort = useSort(
@@ -51,17 +38,17 @@ export const ProcessTable = () => {
   const COLUMNS = [
     {
       label: "Process",
-      renderCell: (item: processInfo) => item.name,
+      renderCell: (item: PorcessInfoState) => item.name,
       sort: { sortKey: "PROCESS" },
     },
     {
       label: "CPU",
-      renderCell: (item: processInfo) => `${item.cpuUsage} %`,
+      renderCell: (item: PorcessInfoState) => `${item.cpuUsage} %`,
       sort: { sortKey: "CPU" },
     },
     {
       label: "RAM",
-      renderCell: (item: processInfo) => `${item.memoryUsage} %`,
+      renderCell: (item: PorcessInfoState) => `${byteToMByte(item.memoryUsage)} MB`,
       sort: { sortKey: "RAM" },
     },
   ];

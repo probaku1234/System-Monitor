@@ -12,10 +12,16 @@ export interface SystemInfoState {
   gpuTemp: number;
   gpuLoad: number;
   // motherboardName: string;
+  processInfo: PorcessInfoState[];
   fetching: boolean;
   error?: string;
 }
 
+export interface PorcessInfoState {
+  name: string;
+  cpuUsage: number;
+  memoryUsage: number;
+}
 
 const initialState: SystemInfoState = {
   // cpuName: "",
@@ -27,6 +33,7 @@ const initialState: SystemInfoState = {
   gpuTemp: 0,
   gpuLoad: 0,
   // motherboardName: "",
+  processInfo: [],
   fetching: true,
   error: "",
 };
