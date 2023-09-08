@@ -1,0 +1,10 @@
+td {
+  text-align: left;
+}
+
+table {
+  margin-top: 10px;
+  margin-bottom: 10px;
+  align-self: center;
+  width: 90%;
+}
