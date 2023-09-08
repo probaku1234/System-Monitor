@@ -4,7 +4,13 @@ td {
 
 table {
   margin-top: 10px;
-  margin-bottom: 10px;
   align-self: center;
   width: 90%;
+}
+
+.pagination-wrapper {
+  display: flex;
+  justify-content: space-between;
+  width: 90%;
+  align-self: center;
 }
