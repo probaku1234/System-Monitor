@@ -6,6 +6,7 @@ import { GaugeChart } from "../components/GaugeChart";
 import DiskUsageBar from "../components/DiskUsageBar";
 import { selectSystemSpecInfo } from "../redux/slice/systemSpecInfoSlice";
 import "./Monitoring.css";
+import { ProcessTable } from "../components/ProcessTable";
 
 function Monitoring() {
   const {
@@ -74,6 +75,11 @@ function Monitoring() {
                 label={getDiskBarLabel(info.usedSpace, info.totalSpace)}
               />
             ))}
+          </div>
+          <hr />
+          <div className="process-section">
+            <h1>PROCESS</h1>
+            <ProcessTable />
           </div>
         </>
       )}
