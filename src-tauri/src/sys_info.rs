@@ -4,7 +4,7 @@ use std::process::{Command, Output};
 use std::thread;
 use std::time::Duration;
 // use systemstat::{saturating_sub_bytes, Platform, System};
-use sysinfo::{CpuExt, System, SystemExt};
+use sysinfo::{CpuExt, DiskExt, ProcessExt, System, SystemExt};
 use tauri::regex;
 // use mockall::*;
 // use mockall::predicate::*;
@@ -26,6 +26,7 @@ pub struct SystemInfo {
     pub cpu_load: i8,
     pub gpu_temp: i8,
     pub gpu_load: i8,
+    pub process_info: Vec<ProcessInfo>,
 }
 
 #[derive(serde::Serialize)]
@@ -45,6 +46,14 @@ pub struct DiskInfo {
     used_space: String,
     total_space: String,
     percent: i8,
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProcessInfo {
+    name: String,
+    cpu_usage: f32,
+    memory_usage: u64,
 }
 
 pub struct SystemInfoFetcher<'a> {
@@ -85,6 +94,8 @@ impl<'a> SystemInfoFetcher<'a> {
         let cpu_temp = cpu_info.0;
         let cpu_load = cpu_info.1;
 
+        let process_info = self.process_info();
+
         sys_info::SystemInfo {
             used_memory,
             total_memory,
@@ -92,10 +103,11 @@ impl<'a> SystemInfoFetcher<'a> {
             cpu_load,
             gpu_temp,
             gpu_load,
+            process_info,
         }
     }
 
-    pub fn create_sys_spec_info(&self) -> SystemSpecInfo {
+    pub fn create_sys_spec_info(&mut self) -> SystemSpecInfo {
         let cpu_name = self.cpu_name();
         let gpu_name = self.gpu_name();
         let motherboard_name = self.motherboard_info();
@@ -238,23 +250,78 @@ impl<'a> SystemInfoFetcher<'a> {
         //     Err(x) => log::error!("\nCPU temp: {}", x),
         // }
         self.sys.refresh_cpu();
+        let mut num = 0.0;
+        let mut sum = 0.0;
         for cpu in self.sys.cpus() {
-            println!("{} {}%", cpu.name(), cpu.cpu_usage());
-            
+            log::debug!("{} {}%", cpu.name(), cpu.cpu_usage());
+            sum += cpu.cpu_usage();
+            num += 1.0;
         }
+        let overall_cpu_load = sum / num;
+        log::debug!("{:}", overall_cpu_load);
+        cpu_load = overall_cpu_load as i8;
 
         (cpu_temp, cpu_load)
     }
 
-    fn disk_info(&self) -> Vec<DiskInfo> {
+    fn disk_info(&mut self) -> Vec<DiskInfo> {
+        // let mut disk_info_vector = Vec::new();
         let disk_info_result = self.run_command_with_powershell("cd ./script ; ./sysinfo.ps1");
         let result_string = String::from_utf8_lossy(&disk_info_result.stdout);
 
         let disk_model_result = self.run_command_with_powershell(COMMAND_DISK_MODEL_INFO);
         let disk_model_result_string = String::from_utf8_lossy(&disk_model_result.stdout);
         let disk_model_vector = self.parse_disk_model(&disk_model_result_string);
+        // let disk_model_vector: Vec<&str> = vec![];
 
+        // self.sys.refresh_disks_list();
+        // for (index, disk) in self.sys.disks().iter().enumerate() {
+        //     log::debug!(
+        //         "{:?} {} {} {}",
+        //         disk.mount_point(),
+        //         disk.available_space(),
+        //         disk.total_space(),
+        //         std::str::from_utf8(&disk.file_system()).unwrap()
+        //     );
+
+        //     let file_system = std::str::from_utf8(&disk.file_system()).unwrap();
+        //     if file_system.eq("FAT32") {
+        //         continue;
+        //     }
+
+        //     disk_info_vector.push(DiskInfo {
+        //         model: disk_model_vector[index].to_string(),
+        //         disk_alpha: disk.mount_point().to_string_lossy().as_bytes()[0] as char,
+        //         used_space: self.format_bytes_string(disk.available_space()),
+        //         total_space: self.format_bytes_string(disk.total_space()),
+        //         percent: (disk.available_space()/disk.total_space() * 100) as i8,
+        //     })
+        // }
+
+        // return disk_info_vector;
         return self.parse_disk_info(disk_model_vector, &result_string);
+    }
+
+    fn process_info(&mut self) -> Vec<ProcessInfo> {
+        let mut process_vec = vec![];
+
+        self.sys.refresh_processes();
+        for (pid, process) in self.sys.processes() {
+            println!(
+                "[{}] {} {:?} {:?}",
+                pid,
+                process.name(),
+                process.cpu_usage(),
+                process.memory()
+            );
+            process_vec.push(ProcessInfo {
+                name: process.name().to_string(),
+                cpu_usage: process.cpu_usage(),
+                memory_usage: process.memory(),
+            })
+        }
+
+        return process_vec;
     }
 
     fn parse_value(&self, value_name: &str, target_string: &str) -> String {
@@ -331,6 +398,31 @@ impl<'a> SystemInfoFetcher<'a> {
         }
         disk_model_vector
     }
+
+    fn format_bytes_string(&self, bytes: u64) -> String {
+        if bytes == 0 {
+            return "0 B".to_string();
+        }
+
+        let mut unit = "B";
+        let mut value = bytes as f64;
+
+        if bytes >= 1.1e+12 as u64 {
+            unit = "TB";
+            value = value / 1.1e+12;
+        } else if bytes >= 1.074e+9 as u64 {
+            unit = "GB";
+            value = value / 1.074e+9;
+        } else if bytes >= 1.049e+6 as u64 {
+            unit = "MB";
+            value = value / 1.049e+6;
+        } else if bytes >= 1024 as u64 {
+            unit = "KB";
+            value = value / 1024.0;
+        }
+
+        format!("{:.1} {}", value, unit)
+    }
 }
 
 #[cfg(test)]
@@ -345,7 +437,7 @@ mod tests {
     //     process::{Command, ExitCode, ExitStatus, Output},
     // };
     // use systemstat::{Platform, System};
-    use sysinfo::{CpuExt, System, SystemExt};
+    use sysinfo::{ComponentExt, CpuExt, NetworkExt, NetworksExt, ProcessExt, System, SystemExt};
 
     #[test]
     fn test_run_command() {
@@ -490,6 +582,24 @@ mod tests {
     }
 
     #[test]
+    fn test_format_bytes_string() {
+        let system_info_fetcher = SystemInfoFetcher {
+            sys: &mut System::new(),
+        };
+        let tb_result = system_info_fetcher.format_bytes_string(2000381014016);
+        let gb_result = system_info_fetcher.format_bytes_string(34703273984);
+        let mb_result = system_info_fetcher.format_bytes_string(3470324);
+        let kb_result = system_info_fetcher.format_bytes_string(3470);
+        let b_result = system_info_fetcher.format_bytes_string(0);
+
+        assert_eq!(tb_result, "1.8 TB");
+        assert_eq!(gb_result, "32.3 GB");
+        assert_eq!(mb_result, "3.3 MB");
+        assert_eq!(kb_result, "3.4 KB");
+        assert_eq!(b_result, "0 B");
+    }
+
+    #[test]
     fn pika() {
         let mut system_info_fetcher = SystemInfoFetcher {
             sys: &mut System::new(),
@@ -502,6 +612,30 @@ mod tests {
         // println!("{}", String::from_utf8_lossy(&result.stdout));
         // println!("{}", String::from_utf8_lossy(&result.stderr));
         system_info_fetcher.cpu_info();
+
+        let mut sys = System::new_all();
+        sys.refresh_all();
+        for (pid, process) in sys.processes() {
+            println!(
+                "[{}] {} {:?} {:?}",
+                pid,
+                process.name(),
+                process.cpu_usage(),
+                process.memory()
+            );
+        }
+
+        // for (interface_name, data) in sys.networks() {
+        //     println!(
+        //         "{}: {}/{} B",
+        //         interface_name,
+        //         data.received(),
+        //         data.transmitted()
+        //     );
+        // }
+        for component in sys.components() {
+            println!("{}: {}°C", component.label(), component.temperature());
+        }
     }
     // #[test]
     // fn get_gpu_info() {
