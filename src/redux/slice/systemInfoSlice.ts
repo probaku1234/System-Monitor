@@ -12,12 +12,12 @@ export interface SystemInfoState {
   gpuTemp: number;
   gpuLoad: number;
   // motherboardName: string;
-  processInfo: PorcessInfoState[];
+  processInfo: ProcessInfoState[];
   fetching: boolean;
   error?: string;
 }
 
-export interface PorcessInfoState {
+export interface ProcessInfoState {
   name: string;
   cpuUsage: number;
   memoryUsage: number;

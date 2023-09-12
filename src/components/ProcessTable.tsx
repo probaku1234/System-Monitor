@@ -5,7 +5,7 @@ import { useSort } from "@table-library/react-table-library/sort";
 import { Action, State } from "@table-library/react-table-library/types/common";
 import { useAppSelector } from "../redux/hooks";
 import { selectSystemInfo } from "../redux/slice/systemInfoSlice";
-import { PorcessInfoState } from "../redux/slice/systemInfoSlice";
+import { ProcessInfoState } from "../redux/slice/systemInfoSlice";
 import { usePagination } from "@table-library/react-table-library/pagination";
 import { byteToMByte } from "../utils/util-functions";
 import "./ProcessTable.css";
@@ -52,17 +52,17 @@ export const ProcessTable = () => {
   const COLUMNS = [
     {
       label: "Process",
-      renderCell: (item: PorcessInfoState) => item.name,
+      renderCell: (item: ProcessInfoState) => item.name,
       sort: { sortKey: "PROCESS" },
     },
     {
       label: "CPU",
-      renderCell: (item: PorcessInfoState) => `${item.cpuUsage.toFixed(2)} %`,
+      renderCell: (item: ProcessInfoState) => `${item.cpuUsage.toFixed(2)} %`,
       sort: { sortKey: "CPU" },
     },
     {
       label: "RAM",
-      renderCell: (item: PorcessInfoState) =>
+      renderCell: (item: ProcessInfoState) =>
         `${byteToMByte(item.memoryUsage)} MB`,
       sort: { sortKey: "RAM" },
     },
@@ -85,7 +85,7 @@ export const ProcessTable = () => {
           Page:{" "}
           {pagination.state
             .getPages(data.nodes)
-            .map((_: PorcessInfoState, index: number) => {
+            .map((_: ProcessInfoState, index: number) => {
               if (index < maxPages) {
                 return (
                   <button

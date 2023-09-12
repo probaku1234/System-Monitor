@@ -17,6 +17,7 @@ describe("system info reducer", () => {
     gpuLoad: 0,
     // motherboardName: "",
     // diskInfo: [],
+    processInfo: [],
     fetching: true,
     error: "",
   };
@@ -33,6 +34,7 @@ describe("system info reducer", () => {
       gpuLoad: 0,
       // motherboardName: "",
       // diskInfo: [],
+      processInfo: [],
       fetching: true,
       error: "",
     });
@@ -52,6 +54,7 @@ describe("system info reducer", () => {
       gpuLoad: 0,
       // motherboardName: "",
       // diskInfo: [],
+      processInfo: [],
       fetching: true,
       error: "",
     });
