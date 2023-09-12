@@ -78,7 +78,7 @@ function Monitoring() {
           </div>
           <hr />
           <div className="process-section">
-            <h1>PROCESS</h1>
+            <h1>TOP PROCESS</h1>
             <ProcessTable />
           </div>
         </>
