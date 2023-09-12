@@ -65,6 +65,5 @@ describe("system spec info reducer", () => {
     };
     const actual = systemSpecInfoReducer(initialState, action);
     expect(actual.fetching).toEqual(false);
-    // expect(actual.error).toEqual("error message");
   });
 });
