@@ -174,27 +174,9 @@ impl<'a> SystemInfoFetcher<'a> {
     }
 
     fn memory_info(&mut self) -> (u64, u64) {
-        let mut used_memory: u64 = 0;
-        let mut total_memory: u64 = 0;
-
-        // match self.sys.memory() {
-        //     Ok(mem) => {
-        //         used_memory = saturating_sub_bytes(mem.total, mem.free).as_u64();
-        //         total_memory = mem.total.as_u64();
-        //         log::debug!(
-        //             "\nMemory: {} used / {} ({} bytes) total ({:?})",
-        //             saturating_sub_bytes(mem.total, mem.free),
-        //             mem.total,
-        //             mem.total.as_u64(),
-        //             mem.platform_memory
-        //         )
-        //     }
-        //     Err(x) => log::error!("\nMemory: error: {}", x),
-        // }
-
         self.sys.refresh_memory();
-        used_memory = self.sys.used_memory();
-        total_memory = self.sys.total_memory();
+        let used_memory = self.sys.used_memory();
+        let total_memory = self.sys.total_memory();
 
         return (used_memory, total_memory);
     }
@@ -221,34 +203,8 @@ impl<'a> SystemInfoFetcher<'a> {
     }
 
     fn cpu_info(&mut self) -> (i8, i8) {
-        let mut cpu_temp = 0;
-        let mut cpu_load = 0;
+        let cpu_temp = 0;
 
-        // match self.sys.cpu_load_aggregate() {
-        //     Ok(cpu) => {
-        //         log::debug!("\nMeasuring CPU load...");
-        //         thread::sleep(Duration::from_secs(1));
-        //         let cpu = cpu.done().unwrap();
-        //         log::debug!(
-        //             "CPU load: {}% user, {}% nice, {}% system, {}% intr, {}% idle ",
-        //             cpu.user * 100.0,
-        //             cpu.nice * 100.0,
-        //             cpu.system * 100.0,
-        //             cpu.interrupt * 100.0,
-        //             cpu.idle * 100.0
-        //         );
-        //         cpu_load = 100 - (cpu.idle * 100.0) as i8;
-        //     }
-        //     Err(x) => log::error!("\nCPU load: error: {}", x),
-        // }
-
-        // match self.sys.cpu_temp() {
-        //     Ok(temp) => {
-        //         cpu_temp = temp as i8;
-        //         log::debug!("\nCPU temp: {}", temp)
-        //     }
-        //     Err(x) => log::error!("\nCPU temp: {}", x),
-        // }
         self.sys.refresh_cpu();
         let mut num = 0.0;
         let mut sum = 0.0;
@@ -259,7 +215,7 @@ impl<'a> SystemInfoFetcher<'a> {
         }
         let overall_cpu_load = sum / num;
         log::debug!("{:}", overall_cpu_load);
-        cpu_load = overall_cpu_load as i8;
+        let cpu_load = overall_cpu_load as i8;
 
         (cpu_temp, cpu_load)
     }
