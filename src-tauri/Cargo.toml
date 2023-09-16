@@ -1,10 +1,10 @@
 [package]
-name = "system-mornitor"
+name = "system-monitor"
 version = "0.0.0"
-description = "A Tauri App"
-authors = ["you"]
-license = ""
-repository = ""
+description = "System Monitor App"
+authors = ["fhzotxldj@gmail.com"]
+license = "MIT"
+repository = "https://github.com/probaku1234/System-Monitor"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -21,9 +21,6 @@ tauri-plugin-store = { git = "https://github.com/tauri-apps/plugins-workspace", 
 simple_logger="4.2.0"
 log = "0.4"
 sysinfo = "0.29.9"
-
-[dev-dependencies]
-mockall = "0.11.2"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem
