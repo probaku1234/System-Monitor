@@ -1,13 +1,8 @@
 use crate::sys_info;
 use regex::Regex;
 use std::process::{Command, Output};
-use std::thread;
-use std::time::Duration;
-// use systemstat::{saturating_sub_bytes, Platform, System};
-use sysinfo::{CpuExt, DiskExt, ProcessExt, System, SystemExt};
+use sysinfo::{CpuExt, ProcessExt, System, SystemExt};
 use tauri::regex;
-// use mockall::*;
-// use mockall::predicate::*;
 
 const COMMAND_GPU_INFO: &str =
     "nvidia-smi --query-gpu=temperature.gpu,gpu_name,utilization.gpu --format=csv,noheader,nounits";
@@ -383,17 +378,7 @@ impl<'a> SystemInfoFetcher<'a> {
 
 #[cfg(test)]
 mod tests {
-    use super::{COMAND_CPU_NAME, COMMAND_MOTHERBOARD_NAME};
-    use crate::sys_info::{DiskInfo, SystemInfoFetcher, COMMAND_GPU_INFO};
-    use std::process::Command;
-    // use mockall::predicate::*;
-    // use mockall::*;
-    // use std::{
-    //     os::windows::process::ExitStatusExt,
-    //     process::{Command, ExitCode, ExitStatus, Output},
-    // };
-    // use systemstat::{Platform, System};
-    use sysinfo::{ComponentExt, CpuExt, NetworkExt, NetworksExt, ProcessExt, System, SystemExt};
+    use super::*;
 
     #[test]
     fn test_run_command() {
@@ -554,55 +539,4 @@ mod tests {
         assert_eq!(kb_result, "3.4 KB");
         assert_eq!(b_result, "0 B");
     }
-
-    #[test]
-    fn pika() {
-        let mut system_info_fetcher = SystemInfoFetcher {
-            sys: &mut System::new(),
-        };
-        // let result = Command::new("powershell")
-        // .args(["-Command", "cd ./script ; ./sysinfo.ps1"])
-        // .output()
-        // .expect("fail to execute command");
-        // let result = system_info_fetcher.run_command_with_powershell("cd ./script ; ./sysinfo.ps1");
-        // println!("{}", String::from_utf8_lossy(&result.stdout));
-        // println!("{}", String::from_utf8_lossy(&result.stderr));
-        system_info_fetcher.cpu_info();
-
-        let mut sys = System::new_all();
-        sys.refresh_all();
-        for (pid, process) in sys.processes() {
-            println!(
-                "[{}] {} {:?} {:?}",
-                pid,
-                process.name(),
-                process.cpu_usage(),
-                process.memory()
-            );
-        }
-
-        // for (interface_name, data) in sys.networks() {
-        //     println!(
-        //         "{}: {}/{} B",
-        //         interface_name,
-        //         data.received(),
-        //         data.transmitted()
-        //     );
-        // }
-        for component in sys.components() {
-            println!("{}: {}°C", component.label(), component.temperature());
-        }
-    }
-    // #[test]
-    // fn get_gpu_info() {
-    //     let string = "foo";
-    //     let mut mock = MockMyTrait::new();
-    //     mock.expect_run_command().return_const(Output {
-    //         status: ExitStatusExt::from_raw(1),
-    //         stderr: vec![],
-    //         stdout: string.as_bytes().to_vec(),
-    //     });
-    //     let result = SystemInfo::gpu_info();
-    //     assert_eq!(result.0, 60);
-    // }
 }

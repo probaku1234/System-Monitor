@@ -4,13 +4,13 @@
 use crate::sys_info::SystemInfoFetcher;
 use simple_logger::SimpleLogger;
 mod sys_info;
+use std::sync::Mutex;
 use sysinfo::{System, SystemExt};
 use tauri::{CustomMenuItem, SystemTray, SystemTrayMenu};
 use tauri::{Manager, State, SystemTrayEvent, SystemTrayMenuItem};
-use std::sync::Mutex;
 
 struct SysStorage {
-    sys: Mutex<System>
+    sys: Mutex<System>,
 }
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
@@ -71,7 +71,9 @@ fn main() {
             }
             _ => {}
         })
-        .manage(SysStorage {sys: System::new().into()})
+        .manage(SysStorage {
+            sys: System::new().into(),
+        })
         .invoke_handler(tauri::generate_handler![
             greet,
             get_sys_info,
